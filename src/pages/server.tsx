@@ -18,7 +18,7 @@ class Services extends Page<IParam> {
         },{
             env
         }).then(list => {
-            console.log(list);
+            console.log(list); 
             // this.setState({
             //     list
             // })
