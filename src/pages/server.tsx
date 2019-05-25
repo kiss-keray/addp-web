@@ -20,7 +20,7 @@ class Services extends Page<IParam> {
         }).then(list => {
             console.log(list); 
             // this.setState({
-            //     list
+            //     list 
             // })
         })
     }
