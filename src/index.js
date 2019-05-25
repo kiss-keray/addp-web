@@ -10,7 +10,7 @@ const app = dva();
 // app.model(require('./models/addp').default);
 
 // 4. Router
-app.router(require('./APP').default);
+app.router(require('./routers').default);
 
 // 5. Start
 app.start('#root');

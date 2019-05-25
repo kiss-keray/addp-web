@@ -1,29 +1,22 @@
 import * as React from 'react';
-import  './Index.css';
 // 通过 ReactHookRedux 获得 Provider 组件和一个 sotre 对象
-import { store } from '../../redux/store'
+import { store } from '../redux/store'
+import { Button } from 'antd';
 function actionOfAdd() {
   return {
     type: "add the count",
     reducer(state:any) {
-      return { ...state, age: state.age + 1 }; // 每次需要返回一个新的 state
+      return { ...state, age: state.age + 1,indexNav:'/test' }; // 每次需要返回一个新的 state
     }
   };
 }
 
-class Button extends React.Component {
-  handleAdd() {
-    store.dispatch(actionOfAdd()); //dispatch
-  }
-  render() {
-    return (<button onClick={this.handleAdd}>add</button>)
-  }
-}
 function Page() {
+  console.log("xxxx1",store.useContext());
   const state = store.useContext();
   return (
     <div>
-      {state.age} <Button />{" "}
+      {state.age} <Button onClick={() => store.dispatch(actionOfAdd())} >吸纳</Button>{" "}
     </div>
   );
 }
