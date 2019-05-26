@@ -7,6 +7,8 @@ import { Layout, Menu, Breadcrumb, Icon } from 'antd';
 import Index from './pages/Index';
 import Projects from './pages/Projects';
 import Services from './pages/server';
+import ChangeBranch from './pages/ChangeBranch';
+import ReleaseWork from './pages/ReleaseWork';
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 class App extends React.Component {
@@ -32,6 +34,12 @@ class App extends React.Component {
                 hidden: false,
                 defaultUrl: '/services/test',
                 key: 'services'
+            },
+            {
+                name: '变更',
+                hidden: false,
+                defaultUrl: '/project/change',
+                key: 'changeBranch'
             }
         ]
     }
@@ -98,6 +106,12 @@ class App extends React.Component {
                             </Switch>
                             <Switch>
                                 <Route path="/services/:env" exact component={Services} />
+                            </Switch>
+                            <Switch>
+                                <Route path="/project/change" exact component={ChangeBranch} />
+                            </Switch>
+                            <Switch>
+                                <Route path="/change/work/:changeId" exact component={ReleaseWork} />
                             </Switch>
                         </Content>
                     </Layout>

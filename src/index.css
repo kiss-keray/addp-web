@@ -5,3 +5,6 @@
   margin: 16px 28px 16px 0;
   float: left;
 }
+.ant-tag.ant-tag-has-color {
+  margin: 0;
+}
