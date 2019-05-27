@@ -24,7 +24,10 @@ interface IState {
     stepB: StepStatus,
     stepC: StepStatus,
 }
-export default class ReleaseWork extends Page<releaseBillModel, IParam, IState> {
+interface IProps extends IPageProps<IParam>{
+    list?:Array<releaseBillModel>
+}
+export default class ReleaseWork extends Page<releaseBillModel, IProps, IState> {
     static baseUrl = 'release';
     constructor(props: IPageProps<IParam>) {
         super(props, ReleaseWork.baseUrl);

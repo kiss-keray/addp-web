@@ -6,7 +6,7 @@ import { Provider } from './redux/store'
 import { Layout, Menu, Breadcrumb, Icon } from 'antd';
 import Index from './pages/Index';
 import Projects from './pages/Projects';
-import Services from './pages/server';
+import Services from './pages/Server';
 import ChangeBranch from './pages/ChangeBranch';
 import ReleaseWork from './pages/ReleaseWork';
 const { SubMenu } = Menu;

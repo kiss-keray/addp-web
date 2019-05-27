@@ -11,7 +11,10 @@ export interface ChangeBranchModel {
     branchName: string,
     projectsModel: ProjectModel
 }
-export default class ChangeBranch extends Page<ChangeBranchModel, IParam, {
+interface IProps extends IPageProps<IParam>{
+    list?:Array<ChangeBranchModel>
+}
+export default class ChangeBranch extends Page<ChangeBranchModel, IProps, {
     pageNumber?: number,
     pageSize?: number,
     list?: Array<ChangeBranchModel>

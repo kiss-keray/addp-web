@@ -31,7 +31,7 @@ export default interface IApi<T> {
     put(url: string, param?: any): Promise<boolean>;
     delete(url: string, param?: any): Promise<boolean>;
 
-    save(model: any): Promise<T>;
+    save(model: T): Promise<T>;
     update(model: {
         id: number
     }): Promise<boolean>;

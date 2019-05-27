@@ -1,29 +1,10 @@
 import * as React from 'react';
-import 'antd/dist/antd.css';
-import './index.css'
-import * as H from 'history';
-import { match } from 'react-router';
-import AddpApi from './AddpApi';
-import IApi, { Pageable } from './IApi'
-export interface IPageProps<P = {}> {
-    location?: H.Location<P>,
-    match?: match<P>,
-    history:H.History,
-    dispatch?:any
-}
-export type ADDPEnv = 'test' | 'pre' | 'pro' | 'bak'
-export type PageType = 'table' | 'add-form' | 'edit-form';
-/**
- * M 页面主要实体对象
- * P 页面match.param 定义
- * S => react.S
- * SS => react.SS
- */
-class Page<M = {}, P = any, S ={},SS = any> extends React.Component<P,S, SS> implements IApi<M>{
+import IApi, { Pageable } from "./IApi";
+import AddpApi from "./AddpApi";
+export default class IComp<M = {}, P = {}, S ={},SS = any> extends React.Component<P,S, SS> implements IApi<M>{
     protected api: AddpApi<M>;
-    public constructor(props: any, baseUrl?: string) {
+    public constructor(props: P, baseUrl?: string) {
         super(props);
-        props.location.state = {...props.location.state,...props.match.params}
         if (baseUrl) {
             this.api = new AddpApi(baseUrl);
         }
@@ -55,12 +36,11 @@ class Page<M = {}, P = any, S ={},SS = any> extends React.Component<P,S, SS> imp
     deleteAny(ids: number[]): Promise<boolean> {
         return this.api.deleteAny(ids);
     }
-    basePage(page: Pageable, param?: Object): Promise<import("./IApi").PageData<M>> {
-        return this.api.basePage(page, param);
-    }
 
-    getOneById(id:number):Promise<M> {
-        return this.api.getOneById(id);
+    basePage(page: Pageable, param?: Object): Promise<import("./IApi").PageData<M>> {
+        throw new Error("Method not implemented.");
+    }
+    getOneById(id: number): Promise<M> {
+        throw new Error("Method not implemented.");
     }
 }
-export default Page;

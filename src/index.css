@@ -1,3 +1,129 @@
+@media only screen and (max-width: 1080px),
+only screen and (max-device-width:1080px) {
+
+  html,
+  body {
+    font-size: 16.875px;
+  }
+}
+
+@media only screen and (max-width: 960px),
+only screen and (max-device-width:960px) {
+
+  html,
+  body {
+    font-size: 15px;
+  }
+}
+
+@media only screen and (max-width: 800px),
+only screen and (max-device-width:800px) {
+
+  html,
+  body {
+    font-size: 12.5px;
+  }
+}
+
+@media only screen and (max-width: 720px),
+only screen and (max-device-width:720px) {
+
+  html,
+  body {
+    font-size: 11.25px;
+  }
+}
+
+@media only screen and (max-width: 640px),
+only screen and (max-device-width:640px) {
+
+  html,
+  body {
+    font-size: 10px;
+  }
+}
+
+@media only screen and (max-width: 600px),
+only screen and (max-device-width:600px) {
+
+  html,
+  body {
+    font-size: 9.375px;
+  }
+}
+
+@media only screen and (max-width: 540px),
+only screen and (max-device-width:540px) {
+
+  html,
+  body {
+    font-size: 8.4375px;
+  }
+}
+
+@media only screen and (max-width: 480px),
+only screen and (max-device-width:480px) {
+
+  html,
+  body {
+    font-size: 7.5px;
+  }
+}
+
+@media only screen and (max-width: 414px),
+only screen and (max-device-width:414px) {
+
+  html,
+  body {
+    font-size: 6.46875px;
+  }
+}
+
+@media only screen and (max-width: 400px),
+only screen and (max-device-width:400px) {
+
+  html,
+  body {
+    font-size: 6.25px;
+  }
+}
+
+@media only screen and (max-width: 375px),
+only screen and (max-device-width:375px) {
+
+  html,
+  body {
+    font-size: 5.859375px;
+  }
+}
+
+@media only screen and (max-width: 360px),
+only screen and (max-device-width:360px) {
+
+  html,
+  body {
+    font-size: 5.625px;
+  }
+}
+
+@media only screen and (max-width: 320px),
+only screen and (max-device-width:320px) {
+
+  html,
+  body {
+    font-size: 5px;
+  }
+}
+
+@media only screen and (max-width: 240px),
+only screen and (max-device-width:240px) {
+
+  html,
+  body {
+    font-size: 3.75px;
+  }
+}
+
 .logo {
   width: 120px;
   height: 31px;
@@ -5,6 +131,67 @@
   margin: 16px 28px 16px 0;
   float: left;
 }
+
 .ant-tag.ant-tag-has-color {
   margin: 0;
+}
+
+.table-top {
+  margin: 0.5rem 0;
+}
+
+.i-xy-center,
+.i-yx-center {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.i-yx-center {
+  flex-direction: column;
+}
+
+.xy-center,
+.yx-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.yx-center {
+  flex-direction: column;
+}
+
+.i-xy-between,
+.i-yx-between {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.i-yx-between {
+  flex-direction: column;
+}
+
+.xy-between,
+.yx-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.yx-between {
+  flex-direction: column;
+}
+
+.xy,
+.yx {
+  display: flex;
+  align-items: center;
+}
+
+.i-xy,
+.i-yx {
+  display: flex;
+  align-items: center;
 }

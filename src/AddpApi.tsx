@@ -48,7 +48,7 @@ class AddpApi<M> implements IApi<M> {
         return this.post(url, param, 'DELETE');
     }
 
-    public save(model: any): Promise<M> {
+    public save(model: M): Promise<M> {
         return this.post(`${this.baseUrl}/create`, model)
     }
     public update(model: {
