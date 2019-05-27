@@ -65,9 +65,6 @@ class CServerForm extends IComp<ServerModel, IFormProps> {
                 .then(this.props.formSu)
                 .catch(e => {
                     this.props.formFai && this.props.formFai(e);
-                    store.dispatch({
-                        pageType: 'table'
-                    })
                 })
         } else if (this.props.formType === "edit") {
             this.update(this.props.form.getFieldsValue())
@@ -144,17 +141,17 @@ interface IState {
 }
 class Server extends Page<ServerModel, IProps, IState> {
     public constructor(props: IProps) {
-        super(props, baseUrl);
+        super(props, baseUrl,"server");
         let env = this.props.match.params.env;
         this.basePage({
             pageNumber: 0,
             pageSize: 10
         }, { env })
             .then(list => {
-                this.props.dispatch({
-                    type: 'server/list',
-                    data: list.content
-                })
+               this.dispatch({
+                type: 'list',
+                data: list.content
+               })
             })
         console.log("server", this.props)
     }
@@ -175,11 +172,8 @@ class Server extends Page<ServerModel, IProps, IState> {
             <div>
                 <div className="table-top xy">
                     <Button type="primary" onClick={() => {
-                        this.props.dispatch({
-                            type: 'server/updateState',
-                            data:{
-                                pageType: 'add-form'
-                            }
+                        this.setSta({
+                            pageType: 'add-form'
                         })
                     }}>添加</Button>
                 </div>
