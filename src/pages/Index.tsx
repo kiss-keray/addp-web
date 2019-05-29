@@ -16,7 +16,7 @@ function Page() {
   const state = store.useContext();
   return (
     <div>
-      {state.age} <Button onClick={() => store.dispatch(actionOfAdd())} >吸纳</Button>{" "}
+      {state.age} <Button onClick={() => store.dispatch(actionOfAdd())} >吸xxx纳</Button>{" "}
     </div>
   );
 }

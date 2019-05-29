@@ -9,6 +9,7 @@ const app = dva();
 // 3. Model
 // app.model(require('./models/addp').default);
 app.model(require('./models').server);
+app.model(require('./models').app);
 
 // 4. Router
 app.router(require('./routers').default);

@@ -1,3 +1,11 @@
+@media only screen and (max-width: 1920px),
+only screen and (max-device-width:1920px) {
+  html,
+  body {
+    font-size: 30px;
+  }
+}
+
 @media only screen and (max-width: 1080px),
 only screen and (max-device-width:1080px) {
 
@@ -194,4 +202,10 @@ only screen and (max-device-width:240px) {
 .i-yx {
   display: flex;
   align-items: center;
+}
+
+.login-box{
+  width: 30%;
+  margin-left: 33%;
+  margin-top: 10rem;
 }

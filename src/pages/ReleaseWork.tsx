@@ -24,11 +24,11 @@ interface IState {
     stepB: StepStatus,
     stepC: StepStatus,
 }
-interface IProps extends IPageProps<IParam>{
-    list?:Array<releaseBillModel>
+interface IProps extends IPageProps<IParam> {
+    list?: Array<releaseBillModel>
 }
 export default class ReleaseWork extends Page<releaseBillModel, IProps, IState> {
-    static baseUrl = 'release';
+    static baseUrl = '/release';
     constructor(props: IPageProps<IParam>) {
         super(props, ReleaseWork.baseUrl);
         this.get(`${ReleaseWork.baseUrl}/selectChangeRB`, {
@@ -183,7 +183,10 @@ export default class ReleaseWork extends Page<releaseBillModel, IProps, IState> 
                 <Step title="更新" icon={<Icon type={this.stepIcon(this.state.stepA)}
                     theme={this.state.stepStatus === "process" ? "outlined" : "twoTone"} />} description=
                     {
-                        this.stepButton(0)
+                        (<div>
+                            {this.stepButton(0)}
+                            {this.state.stepStatus === 'process' ? '' : <Button onClick={this.pullCode.bind(this)}>重新部署</Button>}
+                        </div>)
                     } />
                 <Step title="构建" icon={<Icon type={this.stepIcon(this.state.stepB)}
                     theme={this.state.stepStatus === "process" ? "outlined" : "twoTone"} />} description=

@@ -7,6 +7,8 @@ export default class IComp<M = {}, P = {}, S ={},SS = any> extends React.Compone
         super(props);
         if (baseUrl) {
             this.api = new AddpApi(baseUrl);
+        } else {
+            this.api = new AddpApi()
         }
     }
     request(url: RequestInfo, options: RequestInit): Promise<any> {

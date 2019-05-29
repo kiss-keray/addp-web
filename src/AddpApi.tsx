@@ -1,12 +1,11 @@
 import IApi, { PageData, ApiResult } from './IApi'
 class AddpApi<M> implements IApi<M> {
     private baseUrl: string;
-    constructor(baseUrl: string) {
+    constructor(baseUrl?: string) {
         this.baseUrl = baseUrl;
     }
     public request(url: RequestInfo, options: RequestInit): Promise<any> {
-        options.mode = "cors";
-        return fetch(`http://127.0.0.1:8080/${url}`, options)
+        return fetch(`${url}`, options)
             .then((r: Response) => this.json(r))
             .then(result => {
                 console.log("fetch-log:", result);
@@ -15,7 +14,7 @@ class AddpApi<M> implements IApi<M> {
             .then(this.check)
             .catch(e => {
                 console.log("fetch-error:", e);
-                return e;
+                throw e;
             })
     }
     public get(url: string, param?: any): Promise<any> {
@@ -34,6 +33,9 @@ class AddpApi<M> implements IApi<M> {
     public post(url: string, param?: any, method?: string): Promise<any> {
         let formData: FormData = new FormData();
         for (let key in param) {
+            if (param[key] === undefined || param[key] === null) {
+                continue;
+            }
             formData.append(key, param[key]);
         }
         return this.request(url, {
@@ -49,19 +51,31 @@ class AddpApi<M> implements IApi<M> {
     }
 
     public save(model: M): Promise<M> {
+        if (!this.baseUrl) {
+            throw new Error("baseurl is null")
+        }
         return this.post(`${this.baseUrl}/create`, model)
     }
     public update(model: {
         id: number
     }): Promise<boolean> {
+        if (!this.baseUrl) {
+            throw new Error("baseurl is null")
+        }
         return this.put(`${this.baseUrl}/update`, model)
     }
     public deleteOne(id: number): Promise<boolean> {
+        if (!this.baseUrl) {
+            throw new Error("baseurl is null")
+        }
         return this.delete(`${this.baseUrl}/delete`, {
             id
         });
     }
     public deleteAny(ids: Array<number>): Promise<boolean> {
+        if (!this.baseUrl) {
+            throw new Error("baseurl is null")
+        }
         return this.delete(`${this.baseUrl}/deletes`, {
             ids
         });
@@ -74,9 +88,15 @@ class AddpApi<M> implements IApi<M> {
             asc?: boolean
         }
     }, param?: Object): Promise<PageData<M>> {
+        if (!this.baseUrl) {
+            throw new Error("baseurl is null")
+        }
         return this.post(`${this.baseUrl}/list`, { ...page, ...param });
     }
     public getOneById(id: number): Promise<M> {
+        if (!this.baseUrl) {
+            throw new Error("baseurl is null")
+        }
         return this.get(`${this.baseUrl}/me`, {
             id
         });
@@ -85,7 +105,7 @@ class AddpApi<M> implements IApi<M> {
     private check(result: ApiResult): any {
         if (!result.success) {
             // success=false
-            throw result;
+            throw new Error(result.errorMsg);
         }
         return result.data;
     }

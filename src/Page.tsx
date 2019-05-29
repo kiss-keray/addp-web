@@ -19,15 +19,13 @@ export type PageType = 'table' | 'add-form' | 'edit-form';
  * S => react.S
  * SS => react.SS
  */
-class Page<M = {}, P = any, S ={},SS = any> extends React.Component<P|any,S, SS> implements IApi<M>{
+class Page<M = {}, P = any,R = any, S ={},SS = any> extends React.Component<P|any,S, SS> implements IApi<M>{
     protected api: AddpApi<M>;
     protected namespace:string;
     public constructor(props: any, baseUrl?: string,namespace?:string) {
         super(props);
         props.location.state = {...props.location.state,...props.match.params}
-        if (baseUrl) {
-            this.api = new AddpApi(baseUrl);
-        }
+        this.api = new AddpApi(baseUrl)
         this.namespace = namespace;
     }
     dispatch(action:{
@@ -39,7 +37,7 @@ class Page<M = {}, P = any, S ={},SS = any> extends React.Component<P|any,S, SS>
             data: action.data
         })
     }
-    setSta(d:object) {
+    setSta(d:R) {
         this.dispatch({
             type: 'updateState',
             data: d

@@ -28,12 +28,15 @@ export interface ServerModel {
     environment: 'test' | 'pre' | 'pro' | 'bak',
     allowRestart?: string
 }
-const baseUrl = 'server';
+const baseUrl = '/server';
 interface IFormProps extends FormComponentProps {
     form: any
     formType: 'add' | 'edit',
-    formSu?: (model: ServerModel) => {},
-    formFai?: (model: ServerModel) => {}
+    dispatch?: any,
+    formSu?(model: ServerModel): void,
+    formFai?(model: ServerModel): void,
+    redux?: ServerReduxData,
+    model?: ServerModel
 }
 
 interface IParam {
@@ -43,48 +46,71 @@ interface IProps extends IPageProps<IParam> {
     redux?: ServerReduxData
 }
 export interface ServerReduxData {
-    list: Array<ServerModel>,
-    pageType: PageType
+    list?: Array<ServerModel>,
+    pageType?: PageType
 }
 /**
  * 
  * 服务器管理表单
  */
 class CServerForm extends IComp<ServerModel, IFormProps> {
-    constructor(props: any) {
+    constructor(props: IFormProps) {
         super(props, baseUrl);
+        console.log("form", props)
+
+    }
+    componentDidMount() {
+        this.props.form.setFieldsValue({
+            ...this.props.model
+        })
     }
     handleSubmit = (e: any) => {
+        let success = () => {
+            if (this.props.formType === "add") {
+                this.save(this.props.form.getFieldsValue())
+                    .then(r => {
+                        this.props.dispatch({
+                            type: "server/updateState",
+                            data: {
+                                pageType: 'table'
+                            }
+                        })
+                        this.props.dispatch({
+                            type: "server/list",
+                            data: [...this.props.redux.list, r]
+                        })
+                    })
+                    .catch(e => {
+                        this.props.formFai && this.props.formFai(e);
+                    })
+            } else if (this.props.formType === "edit") {
+                this.update(this.props.form.getFieldsValue())
+                    .then(r => {
+                        if (r) {
+                            this.props.formSu && this.props.formSu(e);
+                        } else {
+                            this.props.formFai && this.props.formFai(e);
+                        }
+                    })
+                    .catch(e => {
+                        this.props.formFai && this.props.formFai(e);
+                    })
+            }
+        }
         this.props.form.validateFields(err => {
             if (!err) {
-                console.info('success');
+                success();
             }
         });
-        if (this.props.formType === "add") {
-            this.save(this.props.form.getFieldsValue())
-                .then(this.props.formSu)
-                .catch(e => {
-                    this.props.formFai && this.props.formFai(e);
-                })
-        } else if (this.props.formType === "edit") {
-            this.update(this.props.form.getFieldsValue())
-                .then(r => {
-                    if (r) {
-                        this.props.formSu && this.props.formSu(e);
-                    } else {
-                        this.props.formFai && this.props.formFai(e);
-                    }
-                })
-                .catch(e => {
-                    this.props.formFai && this.props.formFai(e);
-                })
-        }
     };
 
     render() {
         const { getFieldDecorator } = this.props.form;
         return (
             <Form labelCol={{ span: 5 }} wrapperCol={{ span: 12 }} onSubmit={this.handleSubmit}>
+                <Form.Item>
+                    {getFieldDecorator('id', {})}
+                </Form.Item>
                 <Form.Item label="IP">
                     {getFieldDecorator('ip', {
                         rules: [
@@ -120,7 +146,7 @@ class CServerForm extends IComp<ServerModel, IFormProps> {
                         <Select>
                             <Option value="test">日常/测试环境</Option>
                             <Option value="pre">预发环境</Option>
-                            <Option value="pre">正式环境</Option>
+                            <Option value="pro">正式环境</Option>
                         </Select>,
                     )}
                 </Form.Item>
@@ -137,26 +163,26 @@ const ServerForm = Form.create<IFormProps>()(
     connect(({ server }) => ({ redux: server }))(CServerForm)
 );
 interface IState {
-    pageType: PageType
+    selectModel?: ServerModel,
+    selectIds?: Array<number>
 }
-class Server extends Page<ServerModel, IProps, IState> {
+class Server extends Page<ServerModel, IProps, ServerReduxData, IState> {
     public constructor(props: IProps) {
-        super(props, baseUrl,"server");
+        super(props, baseUrl, "server");
         let env = this.props.match.params.env;
         this.basePage({
             pageNumber: 0,
             pageSize: 10
         }, { env })
-            .then(list => {
-               this.dispatch({
-                type: 'list',
-                data: list.content
-               })
+            .then(page => {
+                this.dispatch({
+                    type: 'list',
+                    data: page.content
+                })
             })
-        console.log("server", this.props)
     }
     public state: IState = {
-        pageType: 'table'
+
     }
     public rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {
@@ -178,6 +204,7 @@ class Server extends Page<ServerModel, IProps, IState> {
                     }}>添加</Button>
                 </div>
                 <Table dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}>
+                    <Column title="id" dataIndex="id" key="id" />
                     <Column title="IP" dataIndex="ip" key="ip" />
                     <Column title="端口" dataIndex="port" key="port" />
                     <Column title="用户名" dataIndex="username" key="username" />
@@ -233,15 +260,16 @@ class Server extends Page<ServerModel, IProps, IState> {
                         align='center'
                         title="操作"
                         key="action"
-                        render={(text, record: {
-                            lastName: String
-                        }) => (
-                                <span>
-                                    <a href="javascript:;">Invite {record.lastName}</a>
-                                    <Divider type="vertical" />
-                                    <a href="javascript:;">Delete</a>
-                                </span>
-                            )}
+                        render={(text, record: ServerModel) => (
+                            <Button onClick={() => {
+                                this.setState({
+                                    selectModel: record,
+                                });
+                                this.setSta({
+                                    pageType: "edit-form"
+                                })
+                            }}>编辑</Button>
+                        )}
                     />
                 </Table>
             </div>
@@ -251,11 +279,11 @@ class Server extends Page<ServerModel, IProps, IState> {
         switch (this.props.redux.pageType) {
             case 'table': return this.loadTable();
             case 'add-form': return this.loadServerAddForm();
-            case 'edit-form': return this.loadServerAddForm();
+            case 'edit-form': return this.loadServerEditForm(this.state.selectModel);
         }
     }
-    public loadServerEditForm() {
-        return (<ServerForm formType='edit' />)
+    public loadServerEditForm = (model: ServerModel) => {
+        return (<ServerForm formType='edit' model={model} />)
     }
     public loadServerAddForm() {
         return (<ServerForm formType='add' />)
@@ -270,5 +298,5 @@ class Server extends Page<ServerModel, IProps, IState> {
 }
 
 export default connect(({ server }) => ({
-    redux:server,
+    redux: server,
 }))(Server)

@@ -16,7 +16,7 @@ export interface ProjectModel {
 }
 class Projects extends Page<ProjectModel,IParam> {
     public constructor(props:IPageProps<IParam>) {
-        super(props,'project');
+        super(props,'/project');
     }
     public render() {
         return (

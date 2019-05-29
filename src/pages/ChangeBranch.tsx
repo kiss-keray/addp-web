@@ -20,7 +20,7 @@ export default class ChangeBranch extends Page<ChangeBranchModel, IProps, {
     list?: Array<ChangeBranchModel>
 }> {
     constructor(props: IPageProps<IParam>) {
-        super(props, "change");
+        super(props, "/change");
         this.basePage({
             pageNumber: this.state.pageNumber,
             pageSize: this.state.pageSize
@@ -37,7 +37,7 @@ export default class ChangeBranch extends Page<ChangeBranchModel, IProps, {
     }
     public release = (record:any) => () => {
         console.log(record)
-        this.props.history.push(`/change/work/${ record.id}`,{
+        this.props.history.push(`/changeBranch/work/${ record.id}`,{
             changeBranchId: record.id
         })
     }

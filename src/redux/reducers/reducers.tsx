@@ -1,4 +1,5 @@
 import { ServerReduxData } from "../../pages/server";
+import { APPReduxData } from "../../APP";
 
 export const ServerReducers = {
     list(state: ServerReduxData, { data }) {
@@ -9,8 +10,13 @@ export const ServerReducers = {
         };
     },
     updateState(state: ServerReduxData, { data }) {
-        console.log("xxx:",state)
-        console.log("yyy:",data)
+        return {
+            ...state, ...data
+        }
+    }
+}
+export const APPReducers = {
+    updateState(state: APPReduxData, { data }) {
         return {
             ...state, ...data
         }

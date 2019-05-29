@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "start": "roadhog server",
+    "start": "set BROWSER=none&&roadhog dev",
     "build": "roadhog build",
     "lint": "eslint --ext .js src test",
     "precommit": "npm run lint"
@@ -10,7 +10,9 @@
     "antd": "^3.18.2",
     "babel-plugin-import": "^1.11.2",
     "dva": "^2.4.1",
+    "md5": "^2.2.1",
     "react": "^16.8.0",
+    "react-cookies": "^0.1.1",
     "react-dom": "^16.8.0",
     "react-hooks-redux": "^0.10.4"
   },
