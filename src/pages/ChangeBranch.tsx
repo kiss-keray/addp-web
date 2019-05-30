@@ -14,7 +14,7 @@ export interface ChangeBranchModel {
 interface IProps extends IPageProps<IParam>{
     list?:Array<ChangeBranchModel>
 }
-export default class ChangeBranch extends Page<ChangeBranchModel, IProps, {
+export default class ChangeBranch extends Page<ChangeBranchModel, any, IProps, {
     pageNumber?: number,
     pageSize?: number,
     list?: Array<ChangeBranchModel>

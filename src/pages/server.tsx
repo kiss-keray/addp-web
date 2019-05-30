@@ -14,11 +14,9 @@ import {
     AutoComplete,
 } from 'antd';
 import { FormComponentProps } from 'antd/lib/form';
-import IC from '../IComp';
 import IComp from '../IComp';
 
 const { Option } = Select;
-const AutoCompleteOption = AutoComplete.Option;
 const { Column } = Table;
 export interface ServerModel {
     id?: number,
@@ -53,10 +51,9 @@ export interface ServerReduxData {
  * 
  * 服务器管理表单
  */
-class CServerForm extends IComp<ServerModel, IFormProps> {
+class CServerForm extends IComp<ServerModel, any, IFormProps> {
     constructor(props: IFormProps) {
-        super(props, baseUrl);
-        console.log("form", props)
+        super(props, baseUrl, "server");
 
     }
     componentDidMount() {
@@ -97,6 +94,7 @@ class CServerForm extends IComp<ServerModel, IFormProps> {
                     })
             }
         }
+        success();
         this.props.form.validateFields(err => {
             if (!err) {
                 success();
@@ -154,8 +152,15 @@ class CServerForm extends IComp<ServerModel, IFormProps> {
                     <Button type="primary" htmlType="submit">
                         保存
               </Button>
+                    <Button type="primary" onClick={() => {
+                        this.setSta({
+                            pageType: "table"
+                        })
+                    }}>
+                        关闭
+              </Button>
                 </Form.Item>
-            </Form>
+            </Form >
         );
     }
 }
@@ -166,7 +171,7 @@ interface IState {
     selectModel?: ServerModel,
     selectIds?: Array<number>
 }
-class Server extends Page<ServerModel, IProps, ServerReduxData, IState> {
+class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
     public constructor(props: IProps) {
         super(props, baseUrl, "server");
         let env = this.props.match.params.env;
@@ -180,6 +185,9 @@ class Server extends Page<ServerModel, IProps, ServerReduxData, IState> {
                     data: page.content
                 })
             })
+        this.setSta({
+            pageType: 'table'
+        })
     }
     public state: IState = {
 

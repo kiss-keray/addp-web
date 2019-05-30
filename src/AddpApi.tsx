@@ -1,4 +1,5 @@
 import IApi, { PageData, ApiResult } from './IApi'
+import { string } from 'prop-types';
 class AddpApi<M> implements IApi<M> {
     private baseUrl: string;
     constructor(baseUrl?: string) {
@@ -43,6 +44,17 @@ class AddpApi<M> implements IApi<M> {
             body: formData
         });
     }
+    
+    postJson(url: string, data?: string): Promise<any> {
+        return this.request(url, {
+            method: 'POST',
+            body: data,
+            headers:{
+                'Content-Type':'application/json'
+            }
+        });
+    }
+
     public put(url: string, param?: any): Promise<boolean> {
         return this.post(url, param, 'PUT');
     }

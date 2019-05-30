@@ -27,7 +27,7 @@ interface IState {
 interface IProps extends IPageProps<IParam> {
     list?: Array<releaseBillModel>
 }
-export default class ReleaseWork extends Page<releaseBillModel, IProps, IState> {
+export default class ReleaseWork extends Page<releaseBillModel,any, IProps, IState> {
     static baseUrl = '/release';
     constructor(props: IPageProps<IParam>) {
         super(props, ReleaseWork.baseUrl);

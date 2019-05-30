@@ -28,6 +28,7 @@ export default interface IApi<T> {
     request(url: RequestInfo, options: RequestInit): Promise<any>;
     get(url: string, param?: any): Promise<any>;
     post(url: string, param?: any, method?: string): Promise<any>;
+    postJson(url: string,data?:string):Promise<any>;
     put(url: string, param?: any): Promise<boolean>;
     delete(url: string, param?: any): Promise<boolean>;
 

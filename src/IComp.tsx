@@ -1,15 +1,28 @@
 import * as React from 'react';
 import IApi, { Pageable } from "./IApi";
 import AddpApi from "./AddpApi";
-export default class IComp<M = {}, P = {}, S ={},SS = any> extends React.Component<P,S, SS> implements IApi<M>{
+export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends React.Component<P,S, SS> implements IApi<M>{
     protected api: AddpApi<M>;
-    public constructor(props: P, baseUrl?: string) {
+    protected namespace:string;
+    public constructor(props: any, baseUrl?: string,namespace?:string) {
         super(props);
-        if (baseUrl) {
-            this.api = new AddpApi(baseUrl);
-        } else {
-            this.api = new AddpApi()
-        }
+        this.api = new AddpApi(baseUrl)
+        this.namespace = namespace;
+    }
+    dispatch(action:{
+        type:string,
+        data:any
+    }) {
+        this.props.dispatch({
+            type: `${this.namespace}/${action.type}`,
+            data: action.data
+        })
+    }
+    setSta(d:R) {
+        this.dispatch({
+            type: 'updateState',
+            data: d
+        })
     }
     request(url: RequestInfo, options: RequestInit): Promise<any> {
         return this.api.request(url, options);
@@ -19,6 +32,9 @@ export default class IComp<M = {}, P = {}, S ={},SS = any> extends React.Compone
     }
     post(url: string, param?: any, method?: string): Promise<any> {
         return this.api.post(url, param, method);
+    }
+    postJson(url: string, data?: string): Promise<any> {
+        return this.api.postJson(url,data);
     }
     put(url: string, param?: any): Promise<boolean> {
         return this.api.put(url, param);

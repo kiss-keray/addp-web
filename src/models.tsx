@@ -13,3 +13,10 @@ export const app = {
     },
     reducers: APPReducers
 }
+export const project = {
+    namespace: 'project',
+    state: {
+        pageType: 'table'
+    },
+    reducers: ServerReducers
+}

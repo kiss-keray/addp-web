@@ -156,7 +156,7 @@ class App extends Page<any, IProps, APPReduxData> {
                                 {
                                     routerMap.map(rou => {
                                         return (
-                                            <Switch>
+                                            <Switch key={rou.path}>
                                                 <Route path={rou.path} exact component={rou.com} />
                                             </Switch>
                                         )

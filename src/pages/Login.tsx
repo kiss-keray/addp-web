@@ -4,11 +4,10 @@ import { APPReduxData } from '../APP';
 import { connect } from 'dva';
 import { Form, Icon, Input, Button, Checkbox, message } from 'antd';
 import cookie from 'react-cookies'
-import { timingSafeEqual } from 'crypto';
 interface IProps extends IPageProps<any> {
     redux?: APPReduxData
 }
-class Login extends Page<any, IProps, APPReduxData> {
+class Login extends Page<any, APPReduxData,IProps> {
     public constructor(props: IPageProps) {
         super(props, '', 'app');
     }
