@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { store } from '../redux/store'
 import { Button, message, Transfer } from 'antd';
-import Page, { IPageProps, PageType } from '../Page';
+import Page, { IPageProps, PageType, TablePageState, TableFormProps, TablePageRedux, TablePageProps } from '../Page';
 import { connect } from 'dva';
 import { Table, Divider, Tag } from 'antd';
 import {
@@ -16,7 +16,6 @@ import { FormComponentProps } from 'antd/lib/form';
 import IComp from '../IComp';
 import { ServerModel } from './Server';
 import { PageData } from '../IApi';
-const { Option } = Select;
 const { Column } = Table;
 
 interface IParam {
@@ -32,27 +31,18 @@ export interface ProjectModel {
     proDomain?: string
 }
 
-interface IProps extends IPageProps<IParam> {
-    redux?: ProjectReduxData
+interface IProps extends TablePageProps<ProjectModel,ProjectReduxData,IParam> {
 }
-export interface ProjectReduxData {
-    list?: Array<ProjectModel>,
-    pageType?: PageType
+export interface ProjectReduxData extends TablePageRedux<ProjectModel>{
 }
-interface IState {
+interface IState extends TablePageState{
     selectModel?: ProjectModel,
     selectIds?: Array<number>
 }
 const baseUrl = "/project"
 
-interface IFormProps extends FormComponentProps {
+interface IFormProps extends FormComponentProps,TableFormProps<ProjectModel,ProjectReduxData> {
     form: any
-    formType: 'add' | 'edit',
-    dispatch?: any,
-    formSu?(model: ProjectModel): void,
-    formFai?(model: ProjectModel): void,
-    redux?: ProjectReduxData,
-    model?: ProjectModel
 }
 export interface TransferData {
     key: string,
@@ -116,7 +106,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
             })
         })
         // 拉取项目现有的服务器
-        if (this.props.redux.pageType === 'edit-form') {
+        if (this.props.formType === 'edit') {
             this.get(`/server/psList/${this.props.model.id}`).then((p: Array<ServerModel>) => {
                 let selectTestServers = [];
                 let selectPreServers = [];
@@ -139,7 +129,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
             })
         }
     }
-    state = {
+    state:FState = {
         myTestServers: [],
         myPreServers: [],
         myProServers: [],
@@ -234,7 +224,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         rules: [
                             { required: true, pattern: /\w+/g }
                         ],
-                    })(<Input />)}
+                    })(<Input disabled/>)}
                 </Form.Item>
                 <Form.Item label="git仓库">
                     {getFieldDecorator('gitUrl', {})(<Input />)}
@@ -330,8 +320,8 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
         })
         let env = this.props.match.params.env;
         this.basePage({
-            pageNumber: 0,
-            pageSize: 10
+            pageNumber: this.state.pageNumber,
+            pageSize: this.state.pageSize
         }, { env })
             .then(page => {
                 this.setSta({
@@ -339,8 +329,12 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                 })
             })
     }
+    
     public state = {
-        selectModel:{}
+        selectModel: {},
+        selectIds: [],
+        pageNumber: 0,
+        pageSize: 10
     }
 
     public rowSelection = {

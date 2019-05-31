@@ -29,3 +29,10 @@ export const ProjectReducers = {
         }
     }
 }
+export const ChangeReducers = {
+    updateState(state: APPReduxData, { data }) {
+        return {
+            ...state, ...data
+        }
+    }
+}

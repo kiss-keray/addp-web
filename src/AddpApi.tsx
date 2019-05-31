@@ -123,7 +123,11 @@ class AddpApi<M> implements IApi<M> {
     }
     private json(response: Response): Promise<ApiResult> {
         if (response.status >= 200 && response.status < 300) {
-            return response.json();
+            try{
+                return response.json();
+            }catch(e) {
+                throw e;
+            }
         }
         const error = new Error(response.statusText);
         error.response = response;

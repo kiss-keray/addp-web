@@ -14,12 +14,28 @@ export interface IPageProps<P = {}> {
 }
 export type ADDPEnv = 'test' | 'pre' | 'pro' | 'bak'
 export type PageType = 'table' | 'add-form' | 'edit-form';
-/**
- * M 页面主要实体对象
- * P 页面match.param 定义
- * S => react.S
- * SS => react.SS
- */
+export interface TablePageState{
+    pageNumber:number,
+    pageSize:number,
+}
+export interface TablePageProps<M,R extends TablePageRedux<M>,P = any> extends IPageProps<P>{
+    redux?: R
+}
+export interface TableFormState{
+    
+}
+export interface TableFormProps<M,R>{
+    formType: 'add' | 'edit',
+    dispatch?: any,
+    formSu?(model: M): void,
+    formFai?(model: M): void,
+    redux?: R,
+    model?: M
+}
+export interface TablePageRedux<M> {
+    list?:Array<M>,
+    pageType?: PageType
+}
 class Page<M = {}, R = any,P = {}, S ={},SS = any> extends IComp<M,R,P,S,SS>{
     public constructor(props: any, baseUrl?: string,namespace?:string) {
         super(props,baseUrl,namespace);

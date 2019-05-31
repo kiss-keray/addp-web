@@ -3,7 +3,7 @@ require('../index.css');
 import { store } from '../redux/store'
 import { Button } from 'antd';
 import { connect } from 'dva';
-import Page, { IPageProps, ADDPEnv, PageType } from '../Page';
+import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TablePageProps, TablePageRedux, TableFormProps } from '../Page';
 import { Table, Divider, Tag } from 'antd';
 import {
     Form,
@@ -20,32 +20,24 @@ const { Option } = Select;
 const { Column } = Table;
 export interface ServerModel {
     id?: number,
-    ip: string,
-    port: number,
+    ip?: string,
+    port?: number,
     username?: string,
-    environment: 'test' | 'pre' | 'pro' | 'bak',
+    environment?: 'test' | 'pre' | 'pro' | 'bak',
     allowRestart?: string
 }
 const baseUrl = '/server';
-interface IFormProps extends FormComponentProps {
+interface IFormProps extends FormComponentProps ,TableFormProps<ServerModel,ServerReduxData>{
     form: any
-    formType: 'add' | 'edit',
-    dispatch?: any,
-    formSu?(model: ServerModel): void,
-    formFai?(model: ServerModel): void,
-    redux?: ServerReduxData,
-    model?: ServerModel
 }
 
 interface IParam {
     env: ADDPEnv
 }
-interface IProps extends IPageProps<IParam> {
-    redux?: ServerReduxData
+interface IProps extends TablePageProps<ServerModel,ServerReduxData,IParam> {
 }
-export interface ServerReduxData {
-    list?: Array<ServerModel>,
-    pageType?: PageType
+export interface ServerReduxData extends TablePageRedux<ServerModel>{
+
 }
 /**
  * 
@@ -66,15 +58,9 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
             if (this.props.formType === "add") {
                 this.save(this.props.form.getFieldsValue())
                     .then(r => {
-                        this.props.dispatch({
-                            type: "server/updateState",
-                            data: {
-                                pageType: 'table'
-                            }
-                        })
-                        this.props.dispatch({
-                            type: "server/list",
-                            data: [...this.props.redux.list, r]
+                        this.setSta({
+                            pageType: 'table',
+                            list: [...this.props.redux.list, r]
                         })
                     })
                     .catch(e => {
@@ -94,7 +80,6 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                     })
             }
         }
-        success();
         this.props.form.validateFields(err => {
             if (!err) {
                 success();
@@ -167,7 +152,7 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
 const ServerForm = Form.create<IFormProps>()(
     connect(({ server }) => ({ redux: server }))(CServerForm)
 );
-interface IState {
+interface IState extends TablePageState{
     selectModel?: ServerModel,
     selectIds?: Array<number>
 }
@@ -176,8 +161,8 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
         super(props, baseUrl, "server");
         let env = this.props.match.params.env;
         this.basePage({
-            pageNumber: 0,
-            pageSize: 10
+            pageNumber: this.state.pageNumber,
+            pageSize: this.state.pageSize
         }, { env })
             .then(page => {
                 this.dispatch({
@@ -189,8 +174,12 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
             pageType: 'table'
         })
     }
-    public state: IState = {
-
+    
+    public state:IState = {
+        selectModel: {},
+        selectIds: [],
+        pageNumber: 0,
+        pageSize: 10
     }
     public rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {

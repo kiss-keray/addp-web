@@ -11,6 +11,7 @@ const app = dva();
 app.model(require('./models').server);
 app.model(require('./models').app);
 app.model(require('./models').project);
+app.model(require('./models').change);
 
 // 4. Router
 app.router(require('./routers').default);
