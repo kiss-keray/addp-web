@@ -117,7 +117,7 @@ class AddpApi<M> implements IApi<M> {
     private check(result: ApiResult): any {
         if (!result.success) {
             // success=false
-            throw new Error(result.errorMsg);
+            throw new Error(result.errorMsg || "ERROR");
         }
         return result.data;
     }

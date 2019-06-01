@@ -12,7 +12,6 @@ function actionOfAdd() {
 }
 
 function Page() {
-  console.log("xxxx1",store.useContext());
   const state = store.useContext();
   return (
     <div>

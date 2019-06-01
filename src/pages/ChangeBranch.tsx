@@ -1,6 +1,6 @@
 import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TableFormProps, TableFormState } from "../Page";
 import { ProjectModel } from "./Projects";
-import { Table, Button, message, Input, Form, Select } from "antd";
+import { Table, Button, message, Input, Form, Select, Pagination } from "antd";
 import IComp from "../IComp";
 import { connect } from "dva";
 import { FormComponentProps } from "antd/lib/form";
@@ -178,23 +178,15 @@ const ChangeFrom = Form.create<IFormProps>()(
 class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, IState> {
     constructor(props: IProps) {
         super(props, "/change", "change");
-        
+        this.loadTableData();
         this.setSta({
             pageType: 'table'
-        })
-        this.basePage({
-            pageNumber: this.state.pageNumber,
-            pageSize: this.state.pageSize
-        }).then(result => {
-            this.setSta({
-                list: result.content
-            })
         })
     }
     public state: IState = {
         selectModel: {},
         selectIds: [],
-        pageNumber: 0,
+        pageNumber: 1,
         pageSize: 10
     }
     public release = (record: any) => () => {
@@ -202,6 +194,25 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         this.props.history.push(`/changeBranch/work/${record.id}`, {
             changeBranchId: record.id
         })
+    }
+    
+    public loadTableData() {
+        this.basePage({
+            pageNumber: this.state.pageNumber - 1,
+            pageSize: this.state.pageSize
+        }).then(result => {
+            this.setState({
+                total: result.totalElements
+            })
+            this.setSta({
+                list: result.content
+            })
+        })
+    }
+    watch = {
+        pageNumber: ({pageNumber,pageSize}) => {
+            this.loadTableData();
+        }
     }
     public loadTable(): React.ReactNode {
         return (
@@ -238,6 +249,29 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
                         )}
                     />
                 </Table>
+                
+                <Pagination
+                    showSizeChanger
+                    pageSize={this.state.pageSize}
+                    current={this.state.pageNumber}
+                    total={this.state.total}
+                    onChange={(pageNumber,pageSize) => {
+                        this.setState({
+                            pageNumber,
+                            pageSize
+                        });
+
+                    }}
+                    onShowSizeChange = {
+                        (pageNumber,pageSize) => {
+                            this.setState({
+                                pageSize,
+                                pageNumber
+                            });
+    
+                        }
+                    }
+                />
             </div>
         )
     }

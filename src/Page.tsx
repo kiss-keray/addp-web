@@ -17,6 +17,7 @@ export type PageType = 'table' | 'add-form' | 'edit-form';
 export interface TablePageState{
     pageNumber:number,
     pageSize:number,
+    total?:number
 }
 export interface TablePageProps<M,R extends TablePageRedux<M>,P = any> extends IPageProps<P>{
     redux?: R

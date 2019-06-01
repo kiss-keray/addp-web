@@ -1,7 +1,7 @@
 import * as React from 'react';
 require('../index.css');
 import { store } from '../redux/store'
-import { Button } from 'antd';
+import { Button, Pagination } from 'antd';
 import { connect } from 'dva';
 import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TablePageProps, TablePageRedux, TableFormProps } from '../Page';
 import { Table, Divider, Tag } from 'antd';
@@ -27,16 +27,16 @@ export interface ServerModel {
     allowRestart?: string
 }
 const baseUrl = '/server';
-interface IFormProps extends FormComponentProps ,TableFormProps<ServerModel,ServerReduxData>{
+interface IFormProps extends FormComponentProps, TableFormProps<ServerModel, ServerReduxData> {
     form: any
 }
 
 interface IParam {
     env: ADDPEnv
 }
-interface IProps extends TablePageProps<ServerModel,ServerReduxData,IParam> {
+interface IProps extends TablePageProps<ServerModel, ServerReduxData, IParam> {
 }
-export interface ServerReduxData extends TablePageRedux<ServerModel>{
+export interface ServerReduxData extends TablePageRedux<ServerModel> {
 
 }
 /**
@@ -152,30 +152,20 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
 const ServerForm = Form.create<IFormProps>()(
     connect(({ server }) => ({ redux: server }))(CServerForm)
 );
-interface IState extends TablePageState{
+interface IState extends TablePageState {
     selectModel?: ServerModel,
     selectIds?: Array<number>
 }
 class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
     public constructor(props: IProps) {
         super(props, baseUrl, "server");
-        let env = this.props.match.params.env;
-        this.basePage({
-            pageNumber: this.state.pageNumber,
-            pageSize: this.state.pageSize
-        }, { env })
-            .then(page => {
-                this.dispatch({
-                    type: 'list',
-                    data: page.content
-                })
-            })
+        this.loadTableData();
         this.setSta({
             pageType: 'table'
         })
     }
-    
-    public state:IState = {
+
+    public state: IState = {
         selectModel: {},
         selectIds: [],
         pageNumber: 0,
@@ -190,6 +180,21 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
             name: record.name,
         }),
     };
+    public loadTableData() {
+        this.basePage({
+            pageNumber: this.state.pageNumber,
+            pageSize: this.state.pageSize
+        }, { env: this.props.match.params.env })
+            .then(page => {
+                this.setState({
+                    total: page.totalElements
+                })
+                this.dispatch({
+                    type: 'list',
+                    data: page.content
+                })
+            })
+    }
     public loadTable(): React.ReactNode {
         return (
             <div>
@@ -269,6 +274,20 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
                         )}
                     />
                 </Table>
+
+                <Pagination
+                    showSizeChanger
+                    pageSize={this.state.pageSize}
+                    current={this.state.pageNumber}
+                    total={this.state.total}
+                    onChange={(pageNumber: number, pageSize: number) => {
+                        this.setState({
+                            pageSize,
+                            pageNumber
+                        })
+                        this.loadTable();
+                    }}
+                />
             </div>
         )
     }

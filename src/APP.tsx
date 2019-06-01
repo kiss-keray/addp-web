@@ -99,6 +99,7 @@ class App extends Page<any, IProps, APPReduxData> {
                 </Switch>
             )
         } else {
+            console.log("active nav = ",this.getNavKey())
             return (
                 <Layout>
                     <Header className="header">
@@ -106,7 +107,7 @@ class App extends Page<any, IProps, APPReduxData> {
                         <Menu
                             theme="dark"
                             mode="horizontal"
-                            defaultSelectedKeys={[this.getNavKey()]}
+                            selectedKeys={[this.getNavKey()]}
                             style={{ lineHeight: '64px' }}
                         >
                             {

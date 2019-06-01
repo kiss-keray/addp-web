@@ -4,7 +4,8 @@ import { APPReduxData } from '../APP';
 import { connect } from 'dva';
 import { Form, Icon, Input, Button, Checkbox, message } from 'antd';
 import cookie from 'react-cookies'
-interface IProps extends IPageProps<any> {
+import { FormComponentProps } from 'antd/lib/form';
+interface IProps extends IPageProps<any>,FormComponentProps<any> {
     redux?: APPReduxData
 }
 class Login extends Page<any, APPReduxData,IProps> {
@@ -44,9 +45,9 @@ class Login extends Page<any, APPReduxData,IProps> {
     private directional() {
         console.log("login",this.props.history)
         if (this.props.history.action == 'POP') {
-            this.props.history.push("/")
+            this.push("/")
         } else {
-            this.props.history.goBack(-1);
+           this.go(-1)
         }
     }
     render() {
@@ -95,7 +96,7 @@ class Login extends Page<any, APPReduxData,IProps> {
         );
     }
 }
-export default Form.create()(
+export default Form.create<IProps>()(
     connect(({ app }) => ({
         redux: app
     }))(Login)

@@ -3,6 +3,7 @@ import IApi, { Pageable } from "./IApi";
 import AddpApi from "./AddpApi";
 export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends React.Component<P,S, SS> implements IApi<M>{
     protected api: AddpApi<M>;
+    protected watch:any = {};
     protected namespace:string;
     public constructor(props: any, baseUrl?: string,namespace?:string) {
         super(props);
@@ -60,5 +61,42 @@ export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends Re
     }
     getOneById(id: number): Promise<M> {
         throw new Error("Method not implemented.");
+    }
+    setState<K extends keyof S>(
+        state: ((prevState: Readonly<S>, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null) |any,
+        callback?: () => void
+    ): void {
+        console.log("state",...state);
+        console.log("watch",...this.watch);
+        let call = () => {
+            try{
+                let stateKeys = new Array();
+                for(let key in state) {
+                    stateKeys.push(key);
+                }
+                for (let key in this.watch) {
+                    let keys = key.split(",");
+                    if (keys.length <= stateKeys.length) {
+                        let count = 0;
+                        for(let k of keys) {
+                            if(stateKeys.includes(k)) {
+                                count ++;
+                            }
+                        }
+                        if (count == keys.length) {
+                            if(typeof this.watch[key] === typeof function(){}) {
+                                this.watch[key](state)
+                            }
+                        }
+                    }
+                }
+            }catch(e){
+                console.log(e);
+            }
+            if (typeof callback === typeof function(){}) {
+                callback();
+            }
+        }
+        super.setState(state,call);
     }
 }
