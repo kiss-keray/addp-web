@@ -17,7 +17,7 @@ const { Header, Content, Sider } = Layout;
 
 export interface APPReduxData {
     token?: string,
-    user?:any
+    user?: any
 }
 interface IProps extends IPageProps<any> {
     redux?: APPReduxData
@@ -28,20 +28,20 @@ const routerMap = [
         com: Index
     },
     {
-        path: '/projects/:env',
+        path: '/projects',
         com: Projects
     },
     {
-        path: '/server/:env',
+        path: '/server',
         com: Server
     },
     {
         path: '/changeBranch',
         com: ChangeBranch
     },
-    
+
     {
-        path: '/changeBranch/work/:changeId',
+        path: '/changeBranch/work',
         com: ReleaseWork
     }
 ]
@@ -56,14 +56,14 @@ const navMap = [
     {
         name: '应用',
         hidden: false,
-        defaultUrl: '/projects/test',
+        defaultUrl: '/projects',
         key: 'projects',
         start: "/projects",
     },
     {
         name: '服务器',
         hidden: false,
-        defaultUrl: '/server/test',
+        defaultUrl: '/server',
         key: 'server',
         start: '/server',
     },
@@ -75,9 +75,16 @@ const navMap = [
         start: '/changeBranch',
     }
 ]
-class App extends Page<any, IProps, APPReduxData> {
+class App extends Page<any, IProps, APPReduxData, {
+    collapsed: boolean,
+    env: string
+}> {
     public constructor(props: IPageProps) {
         super(props, '', 'app');
+    }
+    public state = {
+        collapsed: true,
+        env: 'test'
     }
     public getNavKey() {
         return (navMap.filter(nav => {
@@ -99,7 +106,7 @@ class App extends Page<any, IProps, APPReduxData> {
                 </Switch>
             )
         } else {
-            console.log("active nav = ",this.getNavKey())
+            console.log("active nav = ", this.getNavKey())
             return (
                 <Layout>
                     <Header className="header">
@@ -120,23 +127,28 @@ class App extends Page<any, IProps, APPReduxData> {
                         </Menu>
                     </Header>
                     <Layout>
-                        <Sider width={200} style={{ background: '#fff' }}>
+                        <Sider theme="dark" collapsible collapsed={this.state.collapsed} onCollapse={(collapsed) => {
+                            this.setState({ collapsed })
+                        }}>
                             <Menu
                                 mode="inline"
                                 defaultSelectedKeys={['1']}
                                 defaultOpenKeys={['sub1']}
+                                onClick={({key}) => {
+                                    this.setState({ env: key })
+                                }}
                                 style={{ height: '100%', borderRight: 0 }}
                             >
                                 <SubMenu
-                                    key="sub1"
+                                    key="env"
                                     title={
                                         <span><Icon type="user" />
                                             环境</span>
                                     }
                                 >
-                                    <Menu.Item key="1">测试环境</Menu.Item>
-                                    <Menu.Item key="2">预发环境</Menu.Item>
-                                    <Menu.Item key="3">正式环境</Menu.Item>
+                                    <Menu.Item key="test">测试环境</Menu.Item>
+                                    <Menu.Item key="pre">预发环境</Menu.Item>
+                                    <Menu.Item key="pro">正式环境</Menu.Item>
                                 </SubMenu>
                             </Menu>
                         </Sider>
@@ -158,7 +170,11 @@ class App extends Page<any, IProps, APPReduxData> {
                                     routerMap.map(rou => {
                                         return (
                                             <Switch key={rou.path}>
-                                                <Route path={rou.path} exact component={rou.com} />
+                                                <Route path={rou.path} exact component={(props) => {
+                                                    props.match.params.env = this.state.env
+                                                    return (<rou.com {...props} />)
+                                                }
+                                                } />
                                             </Switch>
                                         )
                                     })

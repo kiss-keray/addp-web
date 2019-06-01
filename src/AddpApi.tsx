@@ -15,7 +15,7 @@ class AddpApi<M> implements IApi<M> {
             .then(this.check)
             .catch(e => {
                 console.log("fetch-error:", e);
-                throw e;
+                // throw e;
             })
     }
     public get(url: string, param?: any): Promise<any> {

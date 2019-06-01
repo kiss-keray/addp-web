@@ -190,7 +190,6 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         pageSize: 10
     }
     public release = (record: any) => () => {
-        console.log(record)
         this.props.history.push(`/changeBranch/work/${record.id}`, {
             changeBranchId: record.id
         })
@@ -210,7 +209,7 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         })
     }
     watch = {
-        pageNumber: ({pageNumber,pageSize}) => {
+        "pageNumber": ({pageNumber,pageSize}) => {
             this.loadTableData();
         }
     }

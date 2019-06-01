@@ -1,6 +1,6 @@
 import Page, { IPageProps, ADDPEnv } from "../Page";
 import { Steps, Button, Icon } from "antd";
-import ChangeBranchModel from "./ChangeBranch";
+import {ChangeBranchModel} from "./ChangeBranch";
 const Step = Steps.Step;
 interface IParam {
     // 发布单id
@@ -31,9 +31,18 @@ export default class ReleaseWork extends Page<releaseBillModel,any, IProps, ISta
     static baseUrl = '/release';
     constructor(props: IPageProps<IParam>) {
         super(props, ReleaseWork.baseUrl);
+        this.init();
+    }
+    public state: IState = {
+        stepCurrent: 0,
+        stepA: 'wait',
+        stepB: 'wait',
+        stepC: 'wait',
+    }
+    public init() {
         this.get(`${ReleaseWork.baseUrl}/selectChangeRB`, {
-            changeId: props.location.state.changeId,
-            env: props.location.state.env || 'test'
+            changeId: this.props.location.state.changeId,
+            env: this.props.location.state.env || 'test'
         }).then(releaseBill => {
             let stepStatus: StepStatus = 'wait', stepCurrent = 0;
             if (releaseBill) {
@@ -61,12 +70,6 @@ export default class ReleaseWork extends Page<releaseBillModel,any, IProps, ISta
                 releaseBill
             })
         })
-    }
-    public state: IState = {
-        stepCurrent: 0,
-        stepA: 'wait',
-        stepB: 'wait',
-        stepC: 'wait',
     }
     public pullCode() {
         this.setState({
