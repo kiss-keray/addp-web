@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { store } from '../redux/store'
-import { Button, message, Transfer } from 'antd';
+import { Button, message, Transfer, Pagination } from 'antd';
 import Page, { IPageProps, PageType, TablePageState, TableFormProps, TablePageRedux, TablePageProps } from '../Page';
 import { connect } from 'dva';
 import { Table, Divider, Tag } from 'antd';
@@ -31,17 +31,17 @@ export interface ProjectModel {
     proDomain?: string
 }
 
-interface IProps extends TablePageProps<ProjectModel,ProjectReduxData,IParam> {
+interface IProps extends TablePageProps<ProjectModel, ProjectReduxData, IParam> {
 }
-export interface ProjectReduxData extends TablePageRedux<ProjectModel>{
+export interface ProjectReduxData extends TablePageRedux<ProjectModel> {
 }
-interface IState extends TablePageState{
+interface IState extends TablePageState {
     selectModel?: ProjectModel,
     selectIds?: Array<number>
 }
 const baseUrl = "/project"
 
-interface IFormProps extends FormComponentProps,TableFormProps<ProjectModel,ProjectReduxData> {
+interface IFormProps extends FormComponentProps, TableFormProps<ProjectModel, ProjectReduxData> {
     form: any
 }
 export interface TransferData {
@@ -129,7 +129,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
             })
         }
     }
-    state:FState = {
+    state: FState = {
         myTestServers: [],
         myPreServers: [],
         myProServers: [],
@@ -167,7 +167,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                     id: 11
                 });
             } else if (this.props.formType === "edit") {
-                this.postJson('/project/update',JSON.stringify(
+                this.postJson('/project/update', JSON.stringify(
                     {
                         ...this.props.form.getFieldsValue(),
                         ...{
@@ -182,14 +182,14 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                                 })
                         }
                     })).then(r => {
-                    if (r) {
-                        this.props.formSu && this.props.formSu(r);
-                    } else {
+                        if (r) {
+                            this.props.formSu && this.props.formSu(r);
+                        } else {
+                            this.props.formFai && this.props.formFai(e);
+                        }
+                    }).catch(e => {
                         this.props.formFai && this.props.formFai(e);
-                    }
-                }).catch(e => {
-                    this.props.formFai && this.props.formFai(e);
-                })
+                    })
             }
         }
         this.props.form.validateFields(err => {
@@ -224,7 +224,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         rules: [
                             { required: true, pattern: /\w+/g }
                         ],
-                    })(<Input disabled/>)}
+                    })(<Input disabled />)}
                 </Form.Item>
                 <Form.Item label="git仓库">
                     {getFieldDecorator('gitUrl', {})(<Input />)}
@@ -268,7 +268,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         operations={['to right', 'to left']}
                         targetKeys={this.state.selectTestServers}
                         render={item => `${item.title}`}
-                        titles={["测试环境","测试环境"]}
+                        titles={["测试环境", "测试环境"]}
                         locale={{ itemUnit: '台', itemsUnit: '台', notFoundContent: '没有服务器', searchPlaceholder: '请输ip搜索服务器' }}
                     />
                 </Form.Item>
@@ -284,7 +284,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         operations={['to right', 'to left']}
                         targetKeys={this.state.selectPreServers}
                         render={item => `${item.title}`}
-                        titles={["预发环境","预发环境"]}
+                        titles={["预发环境", "预发环境"]}
                         locale={{ itemUnit: '台', itemsUnit: '台', notFoundContent: '没有服务器', searchPlaceholder: '请输ip搜索服务器' }}
                     />
                 </Form.Item>
@@ -300,7 +300,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         operations={['to right', 'to left']}
                         targetKeys={this.state.selectProServers}
                         render={item => `${item.title}`}
-                        titles={["正式环境","正式环境"]}
+                        titles={["正式环境", "正式环境"]}
                         locale={{ itemUnit: '台', itemsUnit: '台', notFoundContent: '没有服务器', searchPlaceholder: '请输ip搜索服务器' }}
                     />
                 </Form.Item>
@@ -325,12 +325,15 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
         }, { env })
             .then(page => {
                 this.setSta({
-                    list: page.content
+                    list: page.content,
+                })
+                this.setState({
+                    total: page.totalElements
                 })
             })
     }
-    
-    public state = {
+
+    public state: IState = {
         selectModel: {},
         selectIds: [],
         pageNumber: 0,
@@ -357,7 +360,8 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                         })
                     }}>添加</Button>
                 </div>
-                <Table dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}>
+                <Table
+                    dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}>
                     <Column title="id" dataIndex="id" key="id" />
                     <Column title="项目名" dataIndex="proName" key="proName" />
                     <Column title="projectName" dataIndex="name" key="name" />
@@ -370,17 +374,46 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                         title="操作"
                         key="action"
                         render={(text, record: ProjectModel) => (
-                            <Button onClick={() => {
-                                this.setState({
-                                    selectModel: record,
-                                });
-                                this.setSta({
-                                    pageType: "edit-form"
-                                })
-                            }}>编辑</Button>
+                            <div>
+                                <Button onClick={() => {
+                                    this.setState({
+                                        selectModel: record,
+                                    });
+                                    this.setSta({
+                                        pageType: "edit-form"
+                                    })
+                                }}>编辑</Button>
+                                <Button onClick={() => {
+                                    this.push(`/changeBranch/${record.id}`)
+                                }}>变更</Button>
+                            </div>
+
                         )}
                     />
                 </Table>
+
+                <Pagination
+                    showSizeChanger
+                    pageSize={this.state.pageSize}
+                    current={this.state.pageNumber}
+                    total={this.state.total}
+                    onChange={(pageNumber, pageSize) => {
+                        this.setState({
+                            pageNumber,
+                            pageSize
+                        });
+
+                    }}
+                    onShowSizeChange={
+                        (pageNumber, pageSize) => {
+                            this.setState({
+                                pageSize,
+                                pageNumber
+                            });
+
+                        }
+                    }
+                />
             </div>
         )
     }

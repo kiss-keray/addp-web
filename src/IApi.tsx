@@ -21,7 +21,8 @@ export interface Pageable {
     order?: {
         filed: string,
         asc?: boolean
-    }
+    },
+    [key: string]: any;
 }
 export default interface IApi<T> {
 

@@ -9,6 +9,7 @@ export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends Re
         super(props);
         this.api = new AddpApi(baseUrl)
         this.namespace = namespace;
+        console.log("commoent", props);
     }
     dispatch(action:{
         type:string,

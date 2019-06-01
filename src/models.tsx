@@ -1,4 +1,5 @@
 import { ServerReducers, APPReducers, ChangeReducers } from "./redux/reducers/reducers";
+
 export const server = {
     namespace: 'server',
     state: {
@@ -24,7 +25,8 @@ export const project = {
 export const change = {
     namespace: 'change',
     state: {
-        pageType: 'table'
+        pageType: 'table',
+        nowWork:{}
     },
     reducers: ChangeReducers
 }

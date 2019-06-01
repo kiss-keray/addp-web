@@ -1,98 +1,172 @@
 import Page, { IPageProps, ADDPEnv } from "../Page";
 import { Steps, Button, Icon } from "antd";
-import {ChangeBranchModel} from "./ChangeBranch";
+import { ChangeBranchModel, ChangeReduxData } from "./ChangeBranch";
+import IComp from "../IComp";
+import { connect } from "dva";
+import { ThemeType } from "antd/lib/icon";
 const Step = Steps.Step;
-interface IParam {
-    // 发布单id
-    changeId: number,
-    env: ADDPEnv
-}
-export interface releaseBillModel {
+export interface ReleaseBillModel {
     id?: number,
-    releaseTime: string,
-    member: any,
-    changeBranch: ChangeBranchModel,
-    releaseType: 'wait' | 'run' | 'releaseFail' | 'releaseSuccess',
-    releasePhase: 'stop' | 'init' | 'pullCode' | 'build' | 'start'
+    releaseTime?: string,
+    member?: any,
+    changeBranchModel?: ChangeBranchModel,
+    releaseType?: 'wait' | 'run' | 'releaseFail' | 'releaseSuccess',
+    releasePhase?: 'stop' | 'init' | 'pullCode' | 'build' | 'start',
+    changeBranchId?: number
 }
 type StepStatus = 'wait' | 'process' | 'finish' | 'error';
 interface IState {
-    releaseBill?: releaseBillModel,
+    releaseBill?: ReleaseBillModel,
     stepCurrent: number,
     stepStatus?: StepStatus,
     stepA: StepStatus,
     stepB: StepStatus,
     stepC: StepStatus,
+    changeId?: number
 }
-interface IProps extends IPageProps<IParam> {
-    list?: Array<releaseBillModel>
+interface IProps {
+    env?: ADDPEnv,
+    projectId: number,
+    redux?: ChangeReduxData
 }
-export default class ReleaseWork extends Page<releaseBillModel,any, IProps, IState> {
-    static baseUrl = '/release';
-    constructor(props: IPageProps<IParam>) {
-        super(props, ReleaseWork.baseUrl);
+const baseUrl = '/release'
+export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps, IState> {
+    constructor(props: IProps) {
+        super(props, baseUrl, "change");
+    }
+    getBillStatusInterval;
+    componentWillMount() {
         this.init();
+    }
+    componentWillUnmount() {
+        clearInterval(this.getBillStatusInterval)
     }
     public state: IState = {
         stepCurrent: 0,
         stepA: 'wait',
         stepB: 'wait',
         stepC: 'wait',
+        releaseBill: {}
     }
     public init() {
-        this.get(`${ReleaseWork.baseUrl}/selectChangeRB`, {
-            changeId: this.props.location.state.changeId,
-            env: this.props.location.state.env || 'test'
-        }).then(releaseBill => {
-            let stepStatus: StepStatus = 'wait', stepCurrent = 0;
+        this.get(`${baseUrl}/projectBill/${this.props.env}`, {
+            projectId: this.props.projectId
+        }).then((releaseBill: ReleaseBillModel) => {
             if (releaseBill) {
-                switch (releaseBill.releaseType) {
-                    case 'run': stepStatus = 'process'; break;
-                    case 'releaseFail': stepStatus = 'error'; break;
-                    case 'releaseSuccess': stepStatus = 'finish'; break;
-                }
-                switch (releaseBill.releasePhase) {
-                    case 'init': stepStatus = 'wait';
-                    case 'pullCode': stepCurrent = 0; break;
-                    case 'build': stepCurrent = 1; break;
-                    case 'stop': ;
-                    case 'start': stepCurrent = 2; break;
-                }
+                this.setStep(releaseBill)
+                this.setSta({
+                    nowWork: releaseBill
+                })
             }
-            switch (stepCurrent) {
-                case 0: this.setState({ stepA: stepStatus }); break;
-                case 1: this.setState({ stepB: stepStatus }); break;
-                case 2: this.setState({ stepC: stepStatus }); break;
+        })
+    }
+    public statusInterval(time: number) {
+        clearInterval(this.getBillStatusInterval)
+        this.getBillStatusInterval = setInterval(() => {
+            this.getBillStatus();
+        }, time);
+    }
+    private getBillStatus() {
+        if (this.state.releaseBill.id) {
+            this.get(`${baseUrl}/status`, {
+                id: this.state.releaseBill.id
+            }).then((b: ReleaseBillModel) => {
+                if (b &&
+                    (b.releasePhase != this.state.releaseBill.releasePhase ||
+                        b.releaseType != this.state.releaseBill.releaseType)) {
+                    this.setSta({
+                        nowWork: b
+                    })
+                    this.setStep(b);
+                }
+            })
+        }
+    }
+    private setStep(releaseBill: ReleaseBillModel) {
+        let stepStatus: StepStatus = 'wait', stepCurrent = 0;
+        switch (releaseBill.releaseType) {
+            case 'run': stepStatus = 'process'; break;
+            case 'releaseFail': stepStatus = 'error'; break;
+            case 'releaseSuccess': stepStatus = 'finish'; break;
+        }
+        switch (releaseBill.releasePhase) {
+            case 'init': stepStatus = 'wait';
+            case 'pullCode': stepCurrent = 0; break;
+            case 'build': stepCurrent = 1; break;
+            case 'stop': ;
+            case 'start': stepCurrent = 2; break;
+        }
+        switch (stepCurrent) {
+            case 0: this.setState({ stepA: stepStatus }); break;
+            case 1: this.setState({ stepB: stepStatus }); break;
+            case 2: this.setState({ stepC: stepStatus }); break;
+        }
+        this.setState({
+            stepCurrent,
+            stepStatus,
+            releaseBill
+        })
+    }
+    watch = {
+        "releaseBill":({releaseBill}) => {
+            if (releaseBill.releaseType !== "releaseFail") {
+                if (releaseBill.releasePhase !== "start" && releaseBill.releaseType !== "releaseSuccess") {
+                    this.statusInterval(500);
+                } else {
+                    this.statusInterval(5000);
+                }
+            } else {
+                this.statusInterval(5000);
             }
+        }
+    }
+    public autoRelease(billId?: number) {
+        this.get(`${baseUrl}/autoRelease`, {
+            id: billId || this.state.releaseBill.id
+        }).then(r => {
             this.setState({
-                stepCurrent,
-                stepStatus,
-                releaseBill
+                stepStatus: 'process',
+                stepCurrent: 0,
+                stepA: 'process',
+                releaseBill: r
             })
         })
     }
-    public pullCode() {
+    public pullCode(changeId: number) {
+        this.setSta({
+            nowWork: {
+                releasePhase: 'init',
+                changeBranchId: changeId
+            }
+        })
         this.setState({
             stepStatus: 'process',
             stepCurrent: 0,
-            stepA: 'process'
+            stepA: 'process',
+            changeId
         })
-        this.get(`${ReleaseWork.baseUrl}/pullCode`, {
-            changeId: this.props.location.state.changeId,
-            env: this.props.location.state.env || 'test'
-        }).then(r => {
-            if (r.status) {
+        this.get(`${baseUrl}/pullCode`, {
+            changeId,
+            env: this.props.env || 'test'
+        }).then((b: {
+            status: boolean,
+            bill: ReleaseBillModel
+        }) => {
+            if (b.status) {
                 this.setState({
                     stepStatus: 'finish',
-                    releaseBill: r.model,
+                    releaseBill: b.bill,
                     stepA: 'finish'
+                })
+                this.setSta({
+                    nowWork: b.bill
                 })
                 this.build();
             } else {
                 this.setState({
                     stepA: 'error',
                     stepStatus: 'error',
-                    releaseBill: r.model
+                    releaseBill: b.bill
                 })
             }
         })
@@ -103,22 +177,27 @@ export default class ReleaseWork extends Page<releaseBillModel,any, IProps, ISta
             stepCurrent: 1,
             stepB: 'process'
         })
-        this.get(`${ReleaseWork.baseUrl}/build`, {
-            id: this.state.releaseBill.id
-        }).then(b => {
-            if (b) {
-                this.setState({
-                    stepStatus: 'finish',
-                    stepB: 'finish'
-                })
-                this.startApp();
-            } else {
-                this.setState({
-                    stepStatus: 'error',
-                    stepB: 'error'
-                })
-            }
-        })
+        this.get(`${baseUrl}/build`, {
+            id: this.state.releaseBill.id,
+            changeId: this.state.changeId,
+        }).then(
+            (b: {
+                status: boolean,
+                bill: ReleaseBillModel
+            }) => {
+                if (b.status) {
+                    this.setState({
+                        stepStatus: 'finish',
+                        stepB: 'finish',
+                    })
+                    this.startApp();
+                } else {
+                    this.setState({
+                        stepStatus: 'error',
+                        stepB: 'error'
+                    })
+                }
+            })
     }
     public startApp() {
         this.setState({
@@ -126,13 +205,20 @@ export default class ReleaseWork extends Page<releaseBillModel,any, IProps, ISta
             stepCurrent: 2,
             stepC: 'process'
         })
-        this.get(`${ReleaseWork.baseUrl}/startApp`, {
+        this.get(`${baseUrl}/startApp`, {
             id: this.state.releaseBill.id
-        }).then(b => {
-            if (b) {
+        }).then((b: {
+            status: boolean,
+            bill: ReleaseBillModel
+        }) => {
+            if (b.status) {
                 this.setState({
                     stepStatus: 'finish',
-                    stepC: 'finish'
+                    stepC: 'finish',
+                })
+                this.setSta({
+                    nowWork: b.bill,
+                    list: this.props.redux.list.map(l => l.id === b.bill.changeBranchId ? b.bill : l)
                 })
             } else {
                 this.setState({
@@ -142,21 +228,36 @@ export default class ReleaseWork extends Page<releaseBillModel,any, IProps, ISta
             }
         })
     }
+    public stop() {
+        this.get(`${baseUrl}/down`, {
+            id: this.state.releaseBill.id
+        }).then((b: {
+            status: boolean,
+            bill: ReleaseBillModel
+        }) => {
+            if (b.status) {
+                this.init();
+                this.setSta({
+                    list: this.props.redux.list.map(l => l.id === b.bill.changeBranchId ? b.bill : l)
+                })
+            }
+        })
+    }
     public stepClick = (status: 'run' | 'stop' | 'restart' | 'error-restart') => () => {
         if (status === 'run' || status === 'restart') {
             if (this.state.stepCurrent === 0) {
-                this.pullCode();
+                this.pullCode(this.state.changeId);
             } else if (this.state.stepCurrent === 1) {
                 this.build();
             } else if (this.state.stepCurrent === 2) {
                 this.startApp()
             }
-        } else if (status === 'error-restart'){
-            this.pullCode();
+        } else if (status === 'error-restart') {
+            this.pullCode(this.state.changeId);
         }
     }
     public stepButton = (index: number) => {
-        if (index != this.state.stepCurrent) {
+        if (index != this.state.stepCurrent || !this.state.changeId) {
             return <span></span>
         }
         if (this.state.stepStatus == 'wait') {
@@ -172,37 +273,66 @@ export default class ReleaseWork extends Page<releaseBillModel,any, IProps, ISta
             return <Button type="primary" onClick={this.stepClick('restart')}>重启</Button>
         }
     }
-    public stepIcon = (status: StepStatus): string => {
+    public stepIcon = (index: number, status: StepStatus): {
+        type: string,
+        theme?: ThemeType
+    } => {
+        if (this.state.stepCurrent > index) {
+            return {
+                type: "smile-o",
+                theme: 'filled'
+            };
+        }
         switch (status) {
-            case 'wait': return 'clock-circle';
-            case 'process': return 'loading';
-            case 'finish': return 'smile-o';
-            case 'error': return 'frown';
+            case 'wait': return {
+                type: 'clock-circle',
+                theme: 'filled'
+            };
+            case 'process': return {
+                type: 'loading',
+                theme: 'outlined'
+            };
+            case 'finish': return {
+                type: 'smile-o',
+                theme: 'filled'
+            };
+            case 'error': return {
+                type: 'frown'
+            };
         }
     }
     public render() {
         return (
-            <Steps current={this.state.stepCurrent} status={this.state.stepStatus}>
-                <Step title="更新" icon={<Icon type={this.stepIcon(this.state.stepA)}
-                    theme={this.state.stepStatus === "process" ? "outlined" : "twoTone"} />} description=
-                    {
-                        (<div>
-                            {this.stepButton(0)}
-                            {this.state.stepStatus === 'process' ? '' : <Button onClick={this.pullCode.bind(this)}>重新部署</Button>}
-                        </div>)
-                    } />
-                <Step title="构建" icon={<Icon type={this.stepIcon(this.state.stepB)}
-                    theme={this.state.stepStatus === "process" ? "outlined" : "twoTone"} />} description=
-                    {
-                        this.stepButton(1)
-                    } />
-                <Step title="启动" icon={<Icon type={this.stepIcon(this.state.stepC)}
-                    theme={this.state.stepStatus === "process" ? "outlined" : "twoTone"} />} description=
-                    {
-                        this.stepButton(2)
-                    } />
-            </Steps>
+            <div>
+                <Steps current={this.state.stepCurrent} status={this.state.stepStatus}>
+                    <Step title="更新" icon={<Icon type={this.stepIcon(0, this.state.stepA).type}
+                        theme={this.stepIcon(0, this.state.stepA).theme} />} description=
+                        {
+                            (<div>
+                                {this.stepButton(0)}
+                            </div>)
+                        } />
+                    <Step title="构建" icon={<Icon type={this.stepIcon(1, this.state.stepB).type}
+                        theme={this.stepIcon(1, this.state.stepB).theme} />} description=
+                        {
+                            this.stepButton(1)
+                        } />
+                    <Step title="启动" icon={<Icon type={this.stepIcon(2, this.state.stepC).type}
+                        theme={this.stepIcon(2, this.state.stepC).theme} />} description=
+                        {
+                            this.stepButton(2)
+                        } />
+                </Steps>
+                <div className="xy-center">
+                    运行中的变更（{this.state.releaseBill.changeBranchModel ? this.state.releaseBill.changeBranchModel.name : '----无'}）
+                </div>
+            </div>
 
         );
     }
 }
+export const CReleaseWork = connect(({ change }) => ({
+    redux: change
+}), undefined, undefined, {
+        withRef: true
+    })(ReleaseWork);

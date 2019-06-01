@@ -2,12 +2,11 @@
 import './index.css';
 import * as React from 'react';
 import { Switch, Route, Link, withRouter } from 'dva/router';
-import { Layout, Menu, Breadcrumb, Icon } from 'antd';
+import { Layout, Menu, Breadcrumb, Icon, Row } from 'antd';
 import { connect } from "dva";
 import Index from './pages/Index';
 import Projects from './pages/Projects';
 import ChangeBranch from './pages/ChangeBranch';
-import ReleaseWork from './pages/ReleaseWork';
 import Page, { IPageProps } from './Page';
 import Login from './pages/Login'
 import cookie from 'react-cookies';
@@ -36,13 +35,9 @@ const routerMap = [
         com: Server
     },
     {
-        path: '/changeBranch',
-        com: ChangeBranch
-    },
-
-    {
-        path: '/changeBranch/work',
-        com: ReleaseWork
+        path: '/changeBranch/:projectId',
+        com: ChangeBranch,
+        aCom: null
     }
 ]
 const navMap = [
@@ -51,28 +46,21 @@ const navMap = [
         hidden: false,
         key: 'index',
         defaultUrl: '/',
-        start: "/",
+        start: ["/"],
     },
     {
         name: '应用',
         hidden: false,
         defaultUrl: '/projects',
         key: 'projects',
-        start: "/projects",
+        start: ["/projects","/changeBranch"],
     },
     {
         name: '服务器',
         hidden: false,
         defaultUrl: '/server',
         key: 'server',
-        start: '/server',
-    },
-    {
-        name: '变更',
-        hidden: false,
-        defaultUrl: '/changeBranch',
-        key: 'changeBranch',
-        start: '/changeBranch',
+        start: ['/server'],
     }
 ]
 class App extends Page<any, IProps, APPReduxData, {
@@ -89,6 +77,7 @@ class App extends Page<any, IProps, APPReduxData, {
     public getNavKey() {
         return (navMap.filter(nav => {
             let path = this.props.location.pathname;
+
             return nav.start === "/" ? path === nav.start : path.startsWith(nav.start);
         })[0] || { key: '' }).key;
     }
@@ -97,6 +86,7 @@ class App extends Page<any, IProps, APPReduxData, {
         let token = cookie.load('TOKEN');
         return token && token !== {};
     }
+    public test = null
     public render() {
         console.log("app", this.props)
         if (this.props.location.pathname === '/login' || !this.loginStatus()) {
@@ -134,7 +124,7 @@ class App extends Page<any, IProps, APPReduxData, {
                                 mode="inline"
                                 defaultSelectedKeys={['1']}
                                 defaultOpenKeys={['sub1']}
-                                onClick={({key}) => {
+                                onClick={({ key }) => {
                                     this.setState({ env: key })
                                 }}
                                 style={{ height: '100%', borderRight: 0 }}
@@ -169,13 +159,18 @@ class App extends Page<any, IProps, APPReduxData, {
                                 {
                                     routerMap.map(rou => {
                                         return (
-                                            <Switch key={rou.path}>
-                                                <Route path={rou.path} exact component={(props) => {
-                                                    props.match.params.env = this.state.env
-                                                    return (<rou.com {...props} />)
+                                            <Route path={rou.path} exact
+                                                render={(props) => {
+                                                    props.location.state = {
+                                                        ...props.location.state,
+                                                        ...{
+                                                            env: this.state.env
+                                                        }
+                                                    }
+                                                    return <rou.com {...props} />
                                                 }
-                                                } />
-                                            </Switch>
+                                                }
+                                            />
                                         )
                                     })
                                 }

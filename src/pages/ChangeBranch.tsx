@@ -6,10 +6,14 @@ import { connect } from "dva";
 import { FormComponentProps } from "antd/lib/form";
 import { PageData } from "../IApi";
 import moment = require("moment");
+import { CReleaseWork, ReleaseWork, ReleaseBillModel } from "./ReleaseWork";
+import * as React from 'react';
+
 const { Column } = Table;
 const { Option } = Select;
 interface IParam {
-    nav: ADDPEnv
+    projectId: number,
+    env: ADDPEnv
 }
 export interface ChangeBranchModel {
     id?: number,
@@ -20,9 +24,10 @@ export interface ChangeBranchModel {
 interface IProps extends IPageProps<IParam> {
     redux?: ChangeReduxData
 }
-interface ChangeReduxData {
+export interface ChangeReduxData {
     list?: Array<ChangeBranchModel>,
-    pageType?: PageType
+    pageType?: PageType,
+    nowWork?: ReleaseBillModel
 }
 interface IState extends TablePageState {
     selectModel?: ChangeBranchModel,
@@ -141,7 +146,7 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
                                     placeholder="选着项目"
                                     optionFilterProp="children"
                                     filterOption={
-                                        (input, option:any) => {
+                                        (input, option: any) => {
                                             return new RegExp(input.toLowerCase()).test(option.props.children.toLowerCase());
                                         }
                                     }
@@ -175,47 +180,102 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
 const ChangeFrom = Form.create<IFormProps>()(
     connect(({ change }) => ({ redux: change }))(CChangeFrom)
 );
+const baseUrl = "/change";
 class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, IState> {
     constructor(props: IProps) {
-        super(props, "/change", "change");
+        super(props, baseUrl, "change");
         this.loadTableData();
         this.setSta({
             pageType: 'table'
         })
+        this.releaseWorkRef = React.createRef();
     }
+    public releaseWorkRef: React.RefObject<{
+        getWrappedInstance(): ReleaseWork
+    }>;
     public state: IState = {
         selectModel: {},
         selectIds: [],
         pageNumber: 1,
         pageSize: 10
     }
-    public release = (record: any) => () => {
-        this.props.history.push(`/changeBranch/work/${record.id}`, {
-            changeBranchId: record.id
-        })
-    }
-    
     public loadTableData() {
-        this.basePage({
-            pageNumber: this.state.pageNumber - 1,
-            pageSize: this.state.pageSize
-        }).then(result => {
-            this.setState({
-                total: result.totalElements
+        this.get(`/change/projectChanges/${this.props.match.params.projectId}`)
+            .then((list: Array<ChangeBranchModel>) => {
+                this.setSta({
+                    list
+                })
             })
-            this.setSta({
-                list: result.content
-            })
-        })
     }
     watch = {
-        "pageNumber": ({pageNumber,pageSize}) => {
-            this.loadTableData();
-        }
+
     }
     public loadTable(): React.ReactNode {
         return (
             <div>
+                <div className="release-step">
+                    <CReleaseWork
+                        ref={this.releaseWorkRef}
+                        env={this.props.match.params.env}
+                        projectId={this.props.match.params.projectId}
+                        changeId={this.state.selectModel.id}
+                    ></CReleaseWork>
+                </div>
+                <Table dataSource={this.props.redux.list} bordered>
+                    <Column title="创建时间" dataIndex="createTime" key="createTime" />
+                    <Column title="变更名" dataIndex="name" key="name" />
+                    <Column title="分支名" dataIndex="branchName" key="branchName" />
+                    <Column title="项目名" dataIndex="projectsModel.name" key="p-name" />
+                    <Column
+                        align='center'
+                        title="操作"
+                        key="action"
+                        render={(text, record: ChangeBranchModel) => {
+                            if (this.props.redux.nowWork.changeBranchId === record.id) {
+                                if (this.props.redux.nowWork.releasePhase !== "init") {
+                                    if (this.props.redux.nowWork.releaseType === "run" || this.props.redux.nowWork.releaseType === "wait") {
+                                        return (<Button type="primary" loading>自动部署中</Button>)
+                                    }
+                                    if (!(this.props.redux.nowWork.releasePhase === 'start' && this.props.redux.nowWork.releaseType === "releaseSuccess")) {
+                                        return (<Button type="primary" loading>自动部署中</Button>)
+                                    }
+                                }
+                                return (
+                                    <div>
+                                        <Button type="primary" onClick={() => {
+                                            this.releaseWorkRef.current.getWrappedInstance().autoRelease()
+                                        }}>重新部署</Button>
+                                        <Button type="danger" onClick={() => {
+                                            this.releaseWorkRef.current.getWrappedInstance().stop()
+                                        }}>下线</Button>
+                                    </div>
+                                )
+                            }
+                            return (
+                                <div>
+                                    <Button
+                                        onClick={() => {
+                                            this.get(`${baseUrl}/createBill`, {
+                                                id: record.id,
+                                                env: this.props.match.params.env
+                                            }).then((bill: ReleaseBillModel) => {
+                                                this.releaseWorkRef.current.getWrappedInstance().autoRelease(bill.id)
+                                            })
+                                        }}>发布</Button>
+                                    <Button onClick={() => {
+                                        this.setState({
+                                            selectModel: record,
+                                        });
+                                        this.setSta({
+                                            pageType: "edit-form"
+                                        })
+                                    }}>编辑</Button>
+                                </div>
+                            )
+                        }}
+                    />
+                </Table>
+
                 <div className="table-top xy">
                     <Button type="primary" onClick={() => {
                         this.setSta({
@@ -223,54 +283,7 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
                         })
                     }}>添加</Button>
                 </div>
-                <Table dataSource={this.props.redux.list} bordered>
-                    <Column title="创建时间" dataIndex="createTime" key="createTime" />
-                    <Column title="变更名" dataIndex="name" key="name" />
-                    <Column title="分支名" dataIndex="branchName" key="branchName" />
-                    <Column title="项目创建时间" dataIndex="projectsModel.createTime" key="p-createTime" />
-                    <Column title="项目名" dataIndex="projectsModel.name" key="p-name" />
-                    <Column
-                        align='center'
-                        title="操作"
-                        key="action"
-                        render={(text, record: ChangeBranchModel) => (
-                            <div>
-                                <Button onClick={this.release(record)}>发布</Button>
-                                <Button onClick={() => {
-                                    this.setState({
-                                        selectModel: record,
-                                    });
-                                    this.setSta({
-                                        pageType: "edit-form"
-                                    })
-                                }}>编辑</Button>
-                            </div>
-                        )}
-                    />
-                </Table>
-                
-                <Pagination
-                    showSizeChanger
-                    pageSize={this.state.pageSize}
-                    current={this.state.pageNumber}
-                    total={this.state.total}
-                    onChange={(pageNumber,pageSize) => {
-                        this.setState({
-                            pageNumber,
-                            pageSize
-                        });
 
-                    }}
-                    onShowSizeChange = {
-                        (pageNumber,pageSize) => {
-                            this.setState({
-                                pageSize,
-                                pageNumber
-                            });
-    
-                        }
-                    }
-                />
             </div>
         )
     }

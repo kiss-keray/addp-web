@@ -9,23 +9,23 @@ import IComp from './IComp';
 export interface IPageProps<P = {}> {
     location?: H.Location<P>,
     match?: match<P>,
-    history?:H.History,
-    dispatch?:any
+    history?: H.History,
+    dispatch?: any
 }
 export type ADDPEnv = 'test' | 'pre' | 'pro' | 'bak'
 export type PageType = 'table' | 'add-form' | 'edit-form';
-export interface TablePageState{
-    pageNumber:number,
-    pageSize:number,
-    total?:number
+export interface TablePageState {
+    pageNumber: number,
+    pageSize: number,
+    total?: number
 }
-export interface TablePageProps<M,R extends TablePageRedux<M>,P = any> extends IPageProps<P>{
+export interface TablePageProps<M, R extends TablePageRedux<M>, P = any> extends IPageProps<P> {
     redux?: R
 }
-export interface TableFormState{
-    
+export interface TableFormState {
+
 }
-export interface TableFormProps<M,R>{
+export interface TableFormProps<M, R> {
     formType: 'add' | 'edit',
     dispatch?: any,
     formSu?(model: M): void,
@@ -34,25 +34,28 @@ export interface TableFormProps<M,R>{
     model?: M
 }
 export interface TablePageRedux<M> {
-    list?:Array<M>,
+    list?: Array<M>,
     pageType?: PageType
 }
-class Page<M = {}, R = any,P = {}, S ={},SS = any> extends IComp<M,R,P,S,SS>{
-    public constructor(props: any, baseUrl?: string,namespace?:string) {
-        super(props,baseUrl,namespace);
-        console.log("page",props);
-        props.location.state = {...props.location.state,...props.match.params}
+class Page<M = {}, R = any, P = {}, S = {}, SS = any> extends IComp<M, R, P, S, SS>{
+    public constructor(props: any, baseUrl?: string, namespace?: string) {
+        super(props, baseUrl, namespace);
+        props.location.state = { ...props.location.state, ...props.match.params }
+        props.match.params = props.location.state;
     }
     basePage(page: Pageable, param?: Object): Promise<import("./IApi").PageData<M>> {
         return this.api.basePage(page, param);
     }
-    getOneById(id:number):Promise<M> {
+    getOneById(id: number): Promise<M> {
         return this.api.getOneById(id);
     }
-    push(url:string,state?:{}) {
-        this.props.history.push(url,state);
+    push(pathname: string, state?: {}) {
+        this.props.history.push({
+            pathname,
+            state
+        });
     }
-    go(n:number) {
+    go(n: number) {
         this.props.history.go(n);
     }
     goback() {
