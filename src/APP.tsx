@@ -46,7 +46,7 @@ const navMap = [
         hidden: false,
         key: 'index',
         defaultUrl: '/',
-        start: ["/"],
+        start: ["/other"],
     },
     {
         name: '应用',
@@ -76,9 +76,11 @@ class App extends Page<any, IProps, APPReduxData, {
     }
     public getNavKey() {
         return (navMap.filter(nav => {
-            let path = this.props.location.pathname;
-
-            return nav.start === "/" ? path === nav.start : path.startsWith(nav.start);
+            let path:string = this.props.location.pathname;
+            if (path === "/") {
+                return 'index';
+            }
+            return nav.start.filter(n => path.startsWith(n)).length > 0;
         })[0] || { key: '' }).key;
     }
 

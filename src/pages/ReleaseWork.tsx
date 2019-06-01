@@ -22,7 +22,8 @@ interface IState {
     stepA: StepStatus,
     stepB: StepStatus,
     stepC: StepStatus,
-    changeId?: number
+    changeId?: number,
+    workChangeName?:string
 }
 interface IProps {
     env?: ADDPEnv,
@@ -57,6 +58,13 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
                 this.setSta({
                     nowWork: releaseBill
                 })
+                this.setState({
+                    workChangeName: releaseBill.changeBranchModel.name
+                })
+            } else {
+                this.setState({
+                    workChangeName: "---无"
+                })
             }
         })
     }
@@ -71,6 +79,16 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
             this.get(`${baseUrl}/status`, {
                 id: this.state.releaseBill.id
             }).then((b: ReleaseBillModel) => {
+                if(b && b.releasePhase === 'init') {
+                    this.setState({
+                        releaseBill: {},
+                        workChangeName: "---无"
+                    })
+                    this.setSta({
+                        nowWork: {}
+                    })
+                    return;
+                }
                 if (b &&
                     (b.releasePhase != this.state.releaseBill.releasePhase ||
                         b.releaseType != this.state.releaseBill.releaseType)) {
@@ -109,6 +127,9 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     }
     watch = {
         "releaseBill":({releaseBill}) => {
+            if (!releaseBill.releasePhase || releaseBill.releasePhase === "init") {
+                return;
+            }
             if (releaseBill.releaseType !== "releaseFail") {
                 if (releaseBill.releasePhase !== "start" && releaseBill.releaseType !== "releaseSuccess") {
                     this.statusInterval(500);
@@ -123,31 +144,25 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     public autoRelease(billId?: number) {
         this.get(`${baseUrl}/autoRelease`, {
             id: billId || this.state.releaseBill.id
-        }).then(r => {
+        }).then((r:ReleaseBillModel) => {
             this.setState({
                 stepStatus: 'process',
                 stepCurrent: 0,
                 stepA: 'process',
-                releaseBill: r
+                releaseBill: r,
+                workChangeName: r.changeBranchModel.name
             })
         })
     }
-    public pullCode(changeId: number) {
-        this.setSta({
-            nowWork: {
-                releasePhase: 'init',
-                changeBranchId: changeId
-            }
-        })
+    public pullCode() {
         this.setState({
             stepStatus: 'process',
             stepCurrent: 0,
-            stepA: 'process',
-            changeId
+            stepA: 'process'
         })
         this.get(`${baseUrl}/pullCode`, {
-            changeId,
-            env: this.props.env || 'test'
+            id:this.state.releaseBill.id,
+            env: this.props.env
         }).then((b: {
             status: boolean,
             bill: ReleaseBillModel
@@ -161,7 +176,6 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
                 this.setSta({
                     nowWork: b.bill
                 })
-                this.build();
             } else {
                 this.setState({
                     stepA: 'error',
@@ -190,7 +204,6 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
                         stepStatus: 'finish',
                         stepB: 'finish',
                     })
-                    this.startApp();
                 } else {
                     this.setState({
                         stepStatus: 'error',
@@ -236,7 +249,6 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
             bill: ReleaseBillModel
         }) => {
             if (b.status) {
-                this.init();
                 this.setSta({
                     list: this.props.redux.list.map(l => l.id === b.bill.changeBranchId ? b.bill : l)
                 })
@@ -246,14 +258,14 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     public stepClick = (status: 'run' | 'stop' | 'restart' | 'error-restart') => () => {
         if (status === 'run' || status === 'restart') {
             if (this.state.stepCurrent === 0) {
-                this.pullCode(this.state.changeId);
+                this.pullCode();
             } else if (this.state.stepCurrent === 1) {
                 this.build();
             } else if (this.state.stepCurrent === 2) {
                 this.startApp()
             }
         } else if (status === 'error-restart') {
-            this.pullCode(this.state.changeId);
+            this.pullCode();
         }
     }
     public stepButton = (index: number) => {
@@ -324,7 +336,7 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
                         } />
                 </Steps>
                 <div className="xy-center">
-                    运行中的变更（{this.state.releaseBill.changeBranchModel ? this.state.releaseBill.changeBranchModel.name : '----无'}）
+                    运行中的变更（{this.state.workChangeName}）
                 </div>
             </div>
 
