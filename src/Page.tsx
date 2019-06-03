@@ -40,8 +40,6 @@ export interface TablePageRedux<M> {
 class Page<M = {}, R = any, P = {}, S = {}, SS = any> extends IComp<M, R, P, S, SS>{
     public constructor(props: any, baseUrl?: string, namespace?: string) {
         super(props, baseUrl, namespace);
-        props.location.state = { ...props.location.state, ...props.match.params }
-        props.match.params = props.location.state;
     }
     basePage(page: Pageable, param?: Object): Promise<import("./IApi").PageData<M>> {
         return this.api.basePage(page, param);

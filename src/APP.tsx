@@ -16,7 +16,8 @@ const { Header, Content, Sider } = Layout;
 
 export interface APPReduxData {
     token?: string,
-    user?: any
+    user?: any,
+    siderShow?: boolean
 }
 interface IProps extends IPageProps<any> {
     redux?: APPReduxData
@@ -36,8 +37,7 @@ const routerMap = [
     },
     {
         path: '/changeBranch/:projectId',
-        com: ChangeBranch,
-        aCom: null
+        com: ChangeBranch
     }
 ]
 const navMap = [
@@ -53,7 +53,7 @@ const navMap = [
         hidden: false,
         defaultUrl: '/projects',
         key: 'projects',
-        start: ["/projects","/changeBranch"],
+        start: ["/projects", "/changeBranch"],
     },
     {
         name: '服务器',
@@ -63,7 +63,7 @@ const navMap = [
         start: ['/server'],
     }
 ]
-class App extends Page<any, IProps, APPReduxData, {
+class App extends Page<any, APPReduxData, IProps, {
     collapsed: boolean,
     env: string
 }> {
@@ -76,7 +76,7 @@ class App extends Page<any, IProps, APPReduxData, {
     }
     public getNavKey() {
         return (navMap.filter(nav => {
-            let path:string = this.props.location.pathname;
+            let path: string = this.props.location.pathname;
             if (path === "/") {
                 return 'index';
             }
@@ -119,31 +119,35 @@ class App extends Page<any, IProps, APPReduxData, {
                         </Menu>
                     </Header>
                     <Layout>
-                        <Sider theme="dark" collapsible collapsed={this.state.collapsed} onCollapse={(collapsed) => {
-                            this.setState({ collapsed })
-                        }}>
-                            <Menu
-                                mode="inline"
-                                defaultSelectedKeys={['1']}
-                                defaultOpenKeys={['sub1']}
-                                onClick={({ key }) => {
-                                    this.setState({ env: key })
-                                }}
-                                style={{ height: '100%', borderRight: 0 }}
-                            >
-                                <SubMenu
-                                    key="env"
-                                    title={
-                                        <span><Icon type="user" />
-                                            环境</span>
-                                    }
-                                >
-                                    <Menu.Item key="test">测试环境</Menu.Item>
-                                    <Menu.Item key="pre">预发环境</Menu.Item>
-                                    <Menu.Item key="pro">正式环境</Menu.Item>
-                                </SubMenu>
-                            </Menu>
-                        </Sider>
+                        {
+                            this.props.redux.siderShow ? (
+                                <Sider theme="dark" collapsible collapsed={this.state.collapsed} onCollapse={(collapsed) => {
+                                    this.setState({ collapsed })
+                                }}>
+                                    <Menu
+                                        mode="inline"
+                                        defaultSelectedKeys={['1']}
+                                        defaultOpenKeys={['sub1']}
+                                        onClick={({ key }) => {
+                                            this.setState({ env: key })
+                                        }}
+                                        style={{ height: '100%', borderRight: 0 }}
+                                    >
+                                        <SubMenu
+                                            key="env"
+                                            title={
+                                                <span><Icon type="user" />
+                                                    环境</span>
+                                            }
+                                        >
+                                            <Menu.Item key="test">测试环境</Menu.Item>
+                                            <Menu.Item key="pre">预发环境</Menu.Item>
+                                            <Menu.Item key="pro">正式环境</Menu.Item>
+                                        </SubMenu>
+                                    </Menu>
+                                </Sider>
+                            ) : (<div></div>)
+                        }
                         <Layout style={{ padding: '0 24px 24px' }}>
                             <Breadcrumb style={{ margin: '16px 0' }}>
                                 <Breadcrumb.Item>服务器</Breadcrumb.Item>
@@ -162,13 +166,8 @@ class App extends Page<any, IProps, APPReduxData, {
                                     routerMap.map(rou => {
                                         return (
                                             <Route path={rou.path} exact
-                                                render={(props) => {
-                                                    props.location.state = {
-                                                        ...props.location.state,
-                                                        ...{
-                                                            env: this.state.env
-                                                        }
-                                                    }
+                                                render={(props:any) => {
+                                                    props.env =  this.state.env
                                                     return <rou.com {...props} />
                                                 }
                                                 }
@@ -185,6 +184,6 @@ class App extends Page<any, IProps, APPReduxData, {
 
     }
 }
-export default withRouter(connect(({ app }) => ({
+export default connect(({ app }) => ({
     redux: app
-}))(App));
+}))(App);

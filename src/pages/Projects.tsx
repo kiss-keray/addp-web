@@ -339,6 +339,16 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
         pageNumber: 0,
         pageSize: 10
     }
+    
+    componentWillMount() {
+        this.dispatch({
+            type: "app/updateState",
+            data: {
+                siderShow: false
+            },
+            owner: false
+        })
+    }
 
     public rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {

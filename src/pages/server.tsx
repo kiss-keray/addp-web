@@ -1,6 +1,5 @@
 import * as React from 'react';
 require('../index.css');
-import { store } from '../redux/store'
 import { Button, Pagination } from 'antd';
 import { connect } from 'dva';
 import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TablePageProps, TablePageRedux, TableFormProps } from '../Page';
@@ -32,9 +31,9 @@ interface IFormProps extends FormComponentProps, TableFormProps<ServerModel, Ser
 }
 
 interface IParam {
-    env: ADDPEnv
 }
 interface IProps extends TablePageProps<ServerModel, ServerReduxData, IParam> {
+    env: ADDPEnv
 }
 export interface ServerReduxData extends TablePageRedux<ServerModel> {
 
@@ -46,7 +45,6 @@ export interface ServerReduxData extends TablePageRedux<ServerModel> {
 class CServerForm extends IComp<ServerModel, any, IFormProps> {
     constructor(props: IFormProps) {
         super(props, baseUrl, "server");
-
     }
     componentDidMount() {
         this.props.form.setFieldsValue({
@@ -59,8 +57,7 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                 this.save(this.props.form.getFieldsValue())
                     .then(r => {
                         this.setSta({
-                            pageType: 'table',
-                            list: [...this.props.redux.list, r]
+                            pageType: 'table'
                         })
                     })
                     .catch(e => {
@@ -69,22 +66,20 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
             } else if (this.props.formType === "edit") {
                 this.update(this.props.form.getFieldsValue())
                     .then(r => {
-                        if (r) {
-                            this.props.formSu && this.props.formSu(e);
-                        } else {
-                            this.props.formFai && this.props.formFai(e);
-                        }
-                    })
-                    .catch(e => {
+                        this.setSta({
+                            pageType: 'table'
+                        })
+                    }).catch(e => {
                         this.props.formFai && this.props.formFai(e);
                     })
             }
         }
-        this.props.form.validateFields(err => {
-            if (!err) {
-                success();
-            }
-        });
+        // this.props.form.validateFields((errors, values) => {
+        //     if (!errors) {
+        //         success();
+        //     }
+        // });
+        success();
     };
 
     render() {
@@ -105,7 +100,7 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                     {getFieldDecorator('port', {
                         initialValue: 22,
                         rules: [
-                            { required: false, validator: (r, v) => v < 65536 && v > 0 }
+                            { required: false }
                         ],
                     })(<Input />)}
                 </Form.Item>
@@ -171,6 +166,16 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
         pageNumber: 0,
         pageSize: 10
     }
+    
+    componentWillMount() {
+        this.dispatch({
+            type: "app/updateState",
+            data: {
+                siderShow: true
+            },
+            owner: false
+        })
+    }
     public rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {
             console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
@@ -184,7 +189,7 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
         this.basePage({
             pageNumber: this.state.pageNumber,
             pageSize: this.state.pageSize
-        }, { env: this.props.match.params.env })
+        }, { env: this.props.env })
             .then(page => {
                 this.setState({
                     total: page.totalElements
@@ -194,6 +199,19 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
                     data: page.content
                 })
             })
+    }
+    watch = {
+        "env": (env:ADDPEnv) => {
+            this.loadTableData();
+            this.setSta({
+                pageType: "table"
+            })
+        },
+        "redux.pageType": (pageType:PageType) => {
+            if (pageType === "table") {
+                this.loadTableData();
+            }
+        }
     }
     public loadTable(): React.ReactNode {
         return (

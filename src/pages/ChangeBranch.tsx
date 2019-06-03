@@ -1,6 +1,6 @@
 import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TableFormProps, TableFormState } from "../Page";
 import { ProjectModel } from "./Projects";
-import { Table, Button, message, Input, Form, Select, Pagination } from "antd";
+import { Table, Button, message, Input, Form, Select, Pagination, Menu, Icon } from "antd";
 import IComp from "../IComp";
 import { connect } from "dva";
 import { FormComponentProps } from "antd/lib/form";
@@ -31,7 +31,9 @@ export interface ChangeReduxData {
 }
 interface IState extends TablePageState {
     selectModel?: ChangeBranchModel,
-    selectIds?: Array<number>
+    selectIds?: Array<number>,
+    currentEnv?: ADDPEnv,
+    branchStatus?: boolean
 }
 interface IFormProps extends FormComponentProps, TableFormProps<ChangeBranchModel, ChangeReduxData> {
     form: any
@@ -197,7 +199,21 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         selectModel: {},
         selectIds: [],
         pageNumber: 1,
-        pageSize: 10
+        pageSize: 10,
+        currentEnv: "test",
+        branchStatus: false
+    }
+    componentWillMount() {
+        this.dispatch({
+            type: "app/updateState",
+            data: {
+                siderShow: false
+            },
+            owner: false
+        })
+    }
+    componentWillUnmount() {
+        clearInterval(this.branchStatusInterval);
     }
     public loadTableData() {
         this.get(`/change/projectChanges/${this.props.match.params.projectId}`)
@@ -207,18 +223,62 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
                 })
             })
     }
+    private branchStatusInterval;
+    private intervalBranchStatus() {
+        clearInterval(this.branchStatusInterval);
+        this.branchStatusInterval = setInterval(() => {
+            if (this.props.redux.nowWork.changeBranchId) {
+                this.get(`${baseUrl}/checkBranch`, {
+                    id: this.props.redux.nowWork.changeBranchId
+                }).then((branchStatus: boolean) => {
+                    this.setState({
+                        branchStatus
+                    })
+                }).catch(e => e)
+            } else {
+                this.setState({
+                    branchStatus: false
+                })
+            }
+        }, 5000)
+    }
     watch = {
-
+        "redux.nowWork": (nowWork: ReleaseBillModel) => {
+            this.intervalBranchStatus();
+        }
     }
     public loadTable(): React.ReactNode {
         return (
             <div>
+                <Menu
+                    onClick={({ key }) => {
+                        this.setState({
+                            currentEnv: key
+                        })
+                    }}
+                    selectedKeys={[this.state.currentEnv]}
+                    mode="horizontal"
+                >
+                    <Menu.Item key="test">
+                        <Icon type="apartment" />
+                        测试环境
+                    </Menu.Item>
+                    <Menu.Item key="pre">
+                        <Icon type="cloud-server" />
+                        预发环境
+                    </Menu.Item>
+                    <Menu.Item key="pro">
+                        <Icon type="cloud-upload" />
+                        正式环境
+                    </Menu.Item>
+                </Menu>
                 <div className="release-step">
                     <CReleaseWork
                         ref={this.releaseWorkRef}
-                        env={this.props.match.params.env}
+                        env={this.state.currentEnv}
                         projectId={this.props.match.params.projectId}
                         changeId={this.state.selectModel.id}
+                        branchStatus={this.state.branchStatus}
                     ></CReleaseWork>
                 </div>
                 <Table dataSource={this.props.redux.list} bordered>
@@ -257,10 +317,12 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
                                         onClick={() => {
                                             this.get(`${baseUrl}/createBill`, {
                                                 id: record.id,
-                                                env: this.props.match.params.env
+                                                env: this.state.currentEnv
                                             }).then((bill: ReleaseBillModel) => {
                                                 this.releaseWorkRef.current.getWrappedInstance().autoRelease(bill.id)
-                                            })
+                                            }).catch(e => {
+                                                console.log(e);
+                                            });
                                         }}>发布</Button>
                                     <Button onClick={() => {
                                         this.setState({

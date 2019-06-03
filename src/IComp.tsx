@@ -1,26 +1,28 @@
 import * as React from 'react';
 import IApi, { Pageable } from "./IApi";
 import AddpApi from "./AddpApi";
-export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends React.Component<P,S, SS> implements IApi<M>{
+export default class IComp<M = {}, R = {}, P = object, S = {}, SS = any> extends React.Component<P, S, SS> implements IApi<M>{
     protected api: AddpApi<M>;
-    protected watch:any = {};
-    protected namespace:string;
-    public constructor(props: any, baseUrl?: string,namespace?:string) {
+    protected watch: any = {};
+    protected namespace: string;
+    public constructor(props: any, baseUrl?: string, namespace?: string) {
         super(props);
         this.api = new AddpApi(baseUrl)
         this.namespace = namespace;
         console.log("commoent", props);
     }
-    dispatch(action:{
-        type:string,
-        data:any
+    dispatch(action: {
+        type: string,
+        data: any,
+        owner?: boolean
     }) {
+        action.owner = action.owner === undefined ? true : action.owner;
         this.props.dispatch({
-            type: `${this.namespace}/${action.type}`,
+            type: action.owner ? `${this.namespace}/${action.type}` : action.type,
             data: action.data
         })
     }
-    setSta(d:R) {
+    setSta(d: R) {
         this.dispatch({
             type: 'updateState',
             data: d
@@ -36,7 +38,7 @@ export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends Re
         return this.api.post(url, param, method);
     }
     postJson(url: string, data?: string): Promise<any> {
-        return this.api.postJson(url,data);
+        return this.api.postJson(url, data);
     }
     put(url: string, param?: any): Promise<boolean> {
         return this.api.put(url, param);
@@ -63,41 +65,85 @@ export default class IComp<M = {}, R = {},P = object, S ={},SS = any> extends Re
     getOneById(id: number): Promise<M> {
         throw new Error("Method not implemented.");
     }
-    setState<K extends keyof S>(
-        state: ((prevState: Readonly<S>, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null) |any,
-        callback?: () => void
-    ): void {
-        console.log("state",...state);
-        console.log("watch",...this.watch);
-        let call = () => {
-            try{
-                let stateKeys = new Array();
-                for(let key in state) {
-                    stateKeys.push(key);
-                }
+
+    shouldComponentUpdate(nextProps, nextState) {
+        try {
+            let oldProps = {...this.props};
+            let newProps = {...nextProps};
+            setTimeout(() => {
                 for (let key in this.watch) {
                     let keys = key.split(",");
-                    if (keys.length <= stateKeys.length) {
-                        let count = 0;
-                        for(let k of keys) {
-                            if(stateKeys.includes(k)) {
-                                count ++;
+                    for (let k of keys) {
+                        let oldValue = this.getValue(oldProps, k);
+                        let newValue = this.getValue(newProps, k);
+                        console.log("oldValue", oldValue);
+                        console.log("newValue", newValue)
+                        if (!this.equals(oldValue, newValue)) {
+                            let values = [];
+                            for (let k1 of keys) {
+                                values.push(this.getValue(newProps, k1));
                             }
-                        }
-                        if (count == keys.length) {
-                            if(typeof this.watch[key] === typeof function(){}) {
-                                this.watch[key](state)
-                            }
+                            this.watch[key](...values);
+                            break;
                         }
                     }
                 }
-            }catch(e){
-                console.log(e);
+            }, 0);
+        } catch (e) {
+            console.log("watch props error", e);
+        }
+        return true;
+    }
+
+    setState<K extends keyof S>(
+        state: ((prevState: Readonly<S>, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null) | any,
+        callback?: () => void
+    ): void {
+        let oldState = this.state;
+        let call = () => {
+            try {
+                for (let key in this.watch) {
+                    let keys = key.split(",");
+                    for (let k of keys) {
+                        let oldValue = this.getValue(oldState, k);
+                        let newValue = this.getValue(state, k);
+                        if (!this.equals(oldValue, newValue)) {
+                            let values = [];
+                            for (let k1 of keys) {
+                                values.push(this.getValue(this.state, k1));
+                            }
+                            this.watch[key](...values);
+                            break;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.log();
             }
-            if (typeof callback === typeof function(){}) {
+            if (typeof callback === typeof function () { }) {
                 callback();
             }
         }
-        super.setState(state,call);
+        super.setState(state, call);
+    }
+
+    private equals(o1: any, o2: any): boolean {
+        if (typeof o1 !== typeof o2) {
+            return false;
+        }
+        if (typeof o1 === typeof {}) {
+            return JSON.stringify(o1) === JSON.stringify(o2);
+        }
+        return o1 === o2;
+    }
+    private getValue(o: object, keyStr: string): any {
+        let keys = keyStr.split(".");
+        for (let key of keys) {
+            if (!o) {
+                break;
+            }
+            o = o[key];
+        }
+        return o;
     }
 }

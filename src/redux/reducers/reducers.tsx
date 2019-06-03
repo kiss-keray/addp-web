@@ -1,5 +1,7 @@
 import { ServerReduxData } from "../../pages/server";
 import { APPReduxData } from "../../APP";
+import { ChangeReduxData } from "../../pages/ChangeBranch";
+import { ProjectReduxData } from "../../pages/Projects";
 
 export const ServerReducers = {
     list(state: ServerReduxData, { data }) {
@@ -23,14 +25,14 @@ export const APPReducers = {
     }
 }
 export const ProjectReducers = {
-    updateState(state: APPReduxData, { data }) {
+    updateState(state: ProjectReduxData, { data }) {
         return {
             ...state, ...data
         }
     }
 }
 export const ChangeReducers = {
-    updateState(state: APPReduxData, { data }) {
+    updateState(state: ChangeReduxData, { data }) {
         return {
             ...state, ...data
         }

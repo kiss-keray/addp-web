@@ -2,34 +2,37 @@ import * as React from 'react';
 // 通过 ReactHookRedux 获得 Provider 组件和一个 sotre 对象
 import { store } from '../redux/store'
 import { Button } from 'antd';
+import Page from '../Page'
+import { connect } from 'dva';
 function actionOfAdd() {
   return {
     type: "add the count",
-    reducer(state:any) {
-      return { ...state, age: state.age + 1,indexNav:'/test' }; // 每次需要返回一个新的 state
+    reducer(state: any) {
+      return { ...state, age: state.age + 1, indexNav: '/test' }; // 每次需要返回一个新的 state
     }
   };
 }
-
-function Page() {
-  const state = store.useContext();
-  return (
-    <div>
-      {state.age} <Button onClick={() => store.dispatch(actionOfAdd())} >吸xxx纳</Button>{" "}
-    </div>
-  );
-}
-class Index extends React.Component<any,any> {
+class Index extends Page<any, any, any> {
   public state = {
-    products:[]
+    products: []
   }
-  public render () {
+  componentWillMount() {
+    this.dispatch({
+      type: "app/updateState",
+      data: {
+        siderShow: true
+      },
+      owner: false
+    })
+  }
+  public render() {
     return (
       <div>
-        <Page/>
+        1111111111
       </div>
     )
   }
 }
-
-export default Index
+export default connect(({ index }) => ({
+  redux: index
+}))(Index);

@@ -1,5 +1,6 @@
 import IApi, { PageData, ApiResult } from './IApi'
 import { string } from 'prop-types';
+import { message } from 'antd';
 class AddpApi<M> implements IApi<M> {
     private baseUrl: string;
     constructor(baseUrl?: string) {
@@ -15,7 +16,7 @@ class AddpApi<M> implements IApi<M> {
             .then(this.check)
             .catch(e => {
                 console.log("fetch-error:", e);
-                // throw e;
+                throw e;
             })
     }
     public get(url: string, param?: any): Promise<any> {
@@ -117,7 +118,8 @@ class AddpApi<M> implements IApi<M> {
     private check(result: ApiResult): any {
         if (!result.success) {
             // success=false
-            throw new Error(result.errorMsg || "ERROR");
+                message.error(result.errorMsg || "ERROR");
+                throw new Error(result.errorMsg || "ERROR");
         }
         return result.data;
     }

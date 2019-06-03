@@ -210,5 +210,6 @@ only screen and (max-device-width:240px) {
   margin-top: 10rem;
 }
 .release-step {
-  height: 4rem;
+  height: auto;
+  margin: 2rem 0;
 }
