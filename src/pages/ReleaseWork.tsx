@@ -25,7 +25,8 @@ export interface ReleaseBillModel {
     releaseType?: 'wait' | 'run' | 'releaseFail' | 'releaseSuccess' | "stop",
     releasePhase?: 'stop' | 'init' | 'pullCode' | 'build' | 'start',
     changeBranchId?: number,
-    releaseServerStatusModels?: Array<ReleaseServerStatus>
+    releaseServerStatusModels?: Array<ReleaseServerStatus>,
+    environment?:ADDPEnv
 }
 type StepStatus = 'wait' | 'process' | 'finish' | 'error';
 interface IState {
@@ -89,12 +90,11 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
         }, time);
     }
     private getBillStatus() {
-        let env = this.props.env;
         if (this.state.releaseBill.id) {
             this.get(`${baseUrl}/status`, {
                 id: this.state.releaseBill.id
             }).then((b: ReleaseBillModel) => {
-                if (!this.state.releaseBill.id) {
+                if (!this.state.releaseBill.id || this.props.env !== b.environment) {
                     return;
                 }
                 if (b && b.releasePhase === 'init') {
@@ -222,12 +222,21 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
         }
         releaseType = releaseType ? releaseType : this.state.releaseBill.releaseType
         // 线上发布构建完成，显示提交发布单
-        if (releaseType === "releaseSuccess" && this.state.releaseBill.releasePhase === "build" && this.props.env === "pro" && !serverId) {
+        if (releaseType === "releaseSuccess" && this.state.releaseBill.releasePhase === "build" && this.props.env === "pro" && !serverId
+        && !this.state.releaseBill.releaseTime
+        ) {
             return <Button type="danger" onClick={() => {
                 this.setState({
                     proSubmitModeVisible: true
                 })
             }}>提交发布</Button>
+        }
+        
+        if (releaseType === "releaseSuccess" && stepCurrent === 1 && this.props.env === "pro") {
+            return <Tag color="#f50">等待定时任务</Tag>
+        }
+        if (releaseType === "wait" && stepCurrent === 2 && this.props.env === "pro") {
+            return <Tag color="#f50">等待定时任务</Tag>
         }
         if (releaseType === 'run' && !serverId) {
             return <Button type="primary" onClick={this.stepClick('stop', serverId)}>停止</Button>
@@ -240,9 +249,6 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
         }
         if (releaseType === "stop" && !serverId) {
             return <Button type="primary" onClick={this.stepClick('continue')}>继续</Button>
-        }
-        if (releaseType === "wait" && stepCurrent === 2 && this.props.env === "pro") {
-            return <Tag color="#f50">等待定时任务</Tag>
         }
     }
     public stepIcon = (index: number, stepCurrent?: number, type?: string): ReactNode => {

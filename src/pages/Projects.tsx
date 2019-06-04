@@ -241,6 +241,12 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                     {getFieldDecorator('master', {})(<Input />)}
                 </Form.Item>
 
+                <Form.Item label="项目日志路径/结尾">
+                    {getFieldDecorator('logPath', {
+                        initialValue:'/opt/addp/logs/'
+                    })(<Input />)}
+                </Form.Item>
+
                 <Form.Item wrapperCol={{ span: 12, offset: 5 }}>
                     <Button type="primary" htmlType="submit">
                         保存

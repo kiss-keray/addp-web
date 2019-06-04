@@ -212,6 +212,11 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
             owner: false
         })
     }
+    componentDidMount() {
+        // this.branchStatusInterval = setInterval(() => {
+        //     this.intervalBranchStatus();
+        // }, 5000)
+    }
     componentWillUnmount() {
         clearInterval(this.branchStatusInterval);
     }
@@ -225,26 +230,24 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
     }
     private branchStatusInterval;
     private intervalBranchStatus() {
-        clearInterval(this.branchStatusInterval);
-        this.branchStatusInterval = setInterval(() => {
-            if (this.props.redux.nowWork.changeBranchId) {
-                this.get(`${baseUrl}/checkBranch`, {
-                    id: this.props.redux.nowWork.changeBranchId
-                }).then((branchStatus: boolean) => {
-                    this.setState({
-                        branchStatus
-                    })
-                }).catch(e => e)
-            } else {
+        if (this.props.redux.nowWork.changeBranchId) {
+            this.get(`${baseUrl}/checkBranch`, {
+                id: this.props.redux.nowWork.changeBranchId,
+                env: this.state.currentEnv
+            }).then((branchStatus: boolean) => {
                 this.setState({
-                    branchStatus: false
+                    branchStatus
                 })
-            }
-        }, 5000)
+            }).catch(e => e)
+        } else {
+            this.setState({
+                branchStatus: false
+            })
+        }
     }
     watch = {
         "redux.nowWork": (nowWork: ReleaseBillModel) => {
-            this.intervalBranchStatus();
+            // this.intervalBranchStatus();
         }
     }
     public loadTable(): React.ReactNode {
