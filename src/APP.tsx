@@ -100,85 +100,88 @@ class App extends Page<any, APPReduxData, IProps, {
         } else {
             console.log("active nav = ", this.getNavKey())
             return (
-                <Layout>
-                    <Header className="header">
-                        <div className="logo" />
-                        <Menu
-                            theme="dark"
-                            mode="horizontal"
-                            selectedKeys={[this.getNavKey()]}
-                            style={{ lineHeight: '64px' }}
-                        >
-                            {
-                                navMap.filter(el => !el.hidden).map(el => (
-                                    <Menu.Item key={el.key}>
-                                        <Link to={el.defaultUrl}>{el.name}</Link>
-                                    </Menu.Item>
-                                ))
-                            }
-                        </Menu>
-                    </Header>
+                <div>
+
                     <Layout>
-                        {
-                            this.props.redux.siderShow ? (
-                                <Sider theme="dark" collapsible collapsed={this.state.collapsed} onCollapse={(collapsed) => {
-                                    this.setState({ collapsed })
-                                }}>
-                                    <Menu
-                                        mode="inline"
-                                        defaultSelectedKeys={['1']}
-                                        defaultOpenKeys={['sub1']}
-                                        onClick={({ key }) => {
-                                            this.setState({ env: key })
-                                        }}
-                                        style={{ height: '100%', borderRight: 0 }}
-                                    >
-                                        <SubMenu
-                                            key="env"
-                                            title={
-                                                <span><Icon type="user" />
-                                                    环境</span>
-                                            }
-                                        >
-                                            <Menu.Item key="test">测试环境</Menu.Item>
-                                            <Menu.Item key="pre">预发环境</Menu.Item>
-                                            <Menu.Item key="pro">正式环境</Menu.Item>
-                                        </SubMenu>
-                                    </Menu>
-                                </Sider>
-                            ) : (<div></div>)
-                        }
-                        <Layout style={{ padding: '0 24px 24px' }}>
-                            <Breadcrumb style={{ margin: '16px 0' }}>
-                                <Breadcrumb.Item>服务器</Breadcrumb.Item>
-                                <Breadcrumb.Item>列表</Breadcrumb.Item>
-                                <Breadcrumb.Item>详情</Breadcrumb.Item>
-                            </Breadcrumb>
-                            <Content
-                                style={{
-                                    background: '#fff',
-                                    padding: 24,
-                                    margin: 0,
-                                    minHeight: 280,
-                                }}
+                        <Header className="header">
+                            <div className="logo" />
+                            <Menu
+                                theme="dark"
+                                mode="horizontal"
+                                selectedKeys={[this.getNavKey()]}
+                                style={{ lineHeight: '64px' }}
                             >
                                 {
-                                    routerMap.map(rou => {
-                                        return (
-                                            <Route path={rou.path} exact
-                                                render={(props:any) => {
-                                                    props.env =  this.state.env
-                                                    return <rou.com {...props} />
-                                                }
-                                                }
-                                            />
-                                        )
-                                    })
+                                    navMap.filter(el => !el.hidden).map(el => (
+                                        <Menu.Item key={el.key}>
+                                            <Link to={el.defaultUrl}>{el.name}</Link>
+                                        </Menu.Item>
+                                    ))
                                 }
-                            </Content>
+                            </Menu>
+                        </Header>
+                        <Layout>
+                            {
+                                this.props.redux.siderShow ? (
+                                    <Sider theme="dark" collapsible collapsed={this.state.collapsed} onCollapse={(collapsed) => {
+                                        this.setState({ collapsed })
+                                    }}>
+                                        <Menu
+                                            mode="inline"
+                                            defaultSelectedKeys={['1']}
+                                            defaultOpenKeys={['sub1']}
+                                            onClick={({ key }) => {
+                                                this.setState({ env: key })
+                                            }}
+                                            style={{ height: '100%', borderRight: 0 }}
+                                        >
+                                            <SubMenu
+                                                key="env"
+                                                title={
+                                                    <span><Icon type="user" />
+                                                        环境</span>
+                                                }
+                                            >
+                                                <Menu.Item key="test">测试环境</Menu.Item>
+                                                <Menu.Item key="pre">预发环境</Menu.Item>
+                                                <Menu.Item key="pro">正式环境</Menu.Item>
+                                            </SubMenu>
+                                        </Menu>
+                                    </Sider>
+                                ) : (<div></div>)
+                            }
+                            <Layout style={{ padding: '0 24px 24px' }}>
+                                <Breadcrumb style={{ margin: '16px 0' }}>
+                                    <Breadcrumb.Item>服务器</Breadcrumb.Item>
+                                    <Breadcrumb.Item>列表</Breadcrumb.Item>
+                                    <Breadcrumb.Item>详情</Breadcrumb.Item>
+                                </Breadcrumb>
+                                <Content
+                                    style={{
+                                        background: '#fff',
+                                        padding: 24,
+                                        margin: 0,
+                                        minHeight: 280,
+                                    }}
+                                >
+                                    {
+                                        routerMap.map(rou => {
+                                            return (
+                                                <Route path={rou.path} exact
+                                                    render={(props: any) => {
+                                                        props.env = this.state.env
+                                                        return <rou.com {...props} />
+                                                    }
+                                                    }
+                                                />
+                                            )
+                                        })
+                                    }
+                                </Content>
+                            </Layout>
                         </Layout>
                     </Layout>
-                </Layout>
+                </div>
             )
         }
 

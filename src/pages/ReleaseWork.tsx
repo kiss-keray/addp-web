@@ -26,11 +26,10 @@ export interface ReleaseBillModel {
     releasePhase?: 'stop' | 'init' | 'pullCode' | 'build' | 'start',
     changeBranchId?: number,
     releaseServerStatusModels?: Array<ReleaseServerStatus>,
-    environment?:ADDPEnv
+    environment?: ADDPEnv
 }
 type StepStatus = 'wait' | 'process' | 'finish' | 'error';
 interface IState {
-    releaseBill?: ReleaseBillModel,
     stepCurrent: number,
     stepStatus?: StepStatus,
     changeId?: number,
@@ -38,84 +37,73 @@ interface IState {
     proSubmitModeVisible?: boolean,
     releseTimeDatePicker?: 'time',
     releaseTimeStr?: string,
+    socketInitSend?: boolean,
+    billStatus: ReleaseBillModel
 }
 interface IProps {
     env?: ADDPEnv,
     projectId: number,
     redux?: ChangeReduxData,
-    branchStatus?: boolean
+    branchStatus?: string
 }
 const baseUrl = '/release'
 export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps, IState> {
     constructor(props: IProps) {
         super(props, baseUrl, "change");
+        this.billStatusSocket();
     }
-    getBillStatusInterval;
     componentWillMount() {
         this.init();
     }
     componentWillUnmount() {
-        clearInterval(this.getBillStatusInterval)
+        this.billWebSocket.close();
     }
     public state: IState = {
         stepCurrent: 0,
-        releaseBill: {}
+        billStatus: {}
     }
     public init() {
         this.get(`${baseUrl}/projectBill/${this.props.env}`, {
             projectId: this.props.projectId
         }).then((releaseBill: ReleaseBillModel) => {
-            if (releaseBill) {
-                this.setSta({
-                    nowWork: releaseBill
-                })
-                this.setState({
-                    workChangeName: releaseBill.changeBranchModel.name
-                })
-            } else {
-                this.setState({
-                    workChangeName: "---无"
-                })
-                this.setSta({
-                    nowWork: {}
-                })
-            }
-            this.setStep(releaseBill || {})
+            releaseBill = releaseBill || {}
+            this.setSta({
+                nowWork: releaseBill
+            })
+            this.setState({
+                workChangeName: releaseBill.changeBranchModel ? releaseBill.changeBranchModel.name : "----无"
+            })
         })
     }
-    public statusInterval(time: number) {
-        clearInterval(this.getBillStatusInterval)
-        this.getBillStatusInterval = setInterval(() => {
-            this.getBillStatus();
-        }, time);
-    }
-    private getBillStatus() {
-        if (this.state.releaseBill.id) {
-            this.get(`${baseUrl}/status`, {
-                id: this.state.releaseBill.id
-            }).then((b: ReleaseBillModel) => {
-                if (!this.state.releaseBill.id || this.props.env !== b.environment) {
-                    return;
-                }
-                if (b && b.releasePhase === 'init') {
+    public billWebSocket: WebSocket;
+
+    public billStatusSocket() {
+        this.billWebSocket = new WebSocket("ws://localhost:8080/bill/status");
+        this.billWebSocket.onmessage = ((ev: MessageEvent) => {
+            let data: {
+                type: string,
+                data: any
+            } = JSON.parse(ev.data);
+            if (data.type === "bill_status") {
+                if (data.data.id === this.props.redux.nowWork.id) {
                     this.setState({
-                        releaseBill: {},
-                        workChangeName: "---无"
+                        billStatus: data.data
                     })
-                    this.setSta({
-                        nowWork: {}
-                    })
-                    return;
                 }
-                if (b &&
-                    (b.releasePhase != this.state.releaseBill.releasePhase ||
-                        b.releaseType != this.state.releaseBill.releaseType)) {
-                    this.setSta({
-                        nowWork: b
-                    })
-                    this.setStep(b);
-                }
-            })
+            }
+        })
+    }
+    public subscribeBillStatus(billId: number) {
+        if (this.billWebSocket.readyState === 1) {
+            if (billId) {
+                this.billWebSocket.send(JSON.stringify({
+                    subscribe: billId
+                }));
+            } else {
+                this.billWebSocket.send(JSON.stringify({
+                    unSubscribe: ''
+                }));
+            }
         }
     }
     private setStep(releaseBill: ReleaseBillModel) {
@@ -133,49 +121,47 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
         }
         this.setState({
             stepCurrent,
-            stepStatus,
-            releaseBill
+            stepStatus
         })
     }
     watch = {
-        "releaseBill": (releaseBill) => {
-            console.log("watch releaseBill--------", releaseBill)
-            if (!releaseBill.releasePhase || releaseBill.releasePhase === "init") {
-                return;
-            }
-            if (releaseBill.releaseType !== "releaseFail") {
-                if (!(releaseBill.releasePhase === "start" && releaseBill.releaseType === "releaseSuccess")) {
-                    this.statusInterval(1000);
-                } else {
-                    this.statusInterval(5000);
-                }
-            } else {
-                this.statusInterval(5000);
-            }
-        },
         "env": (env) => {
-            console.log("watch env------", env);
             this.init();
+        },
+        "redux.nowWork": (releaseBill: ReleaseBillModel) => {
+            this.subscribeBillStatus(releaseBill.id);
+            this.setState({
+                billStatus: releaseBill
+            })
+        },
+        "billStatus": (billStatus: ReleaseBillModel) => {
+            console.log("watch --- billStatus", billStatus)
+            this.setStep(billStatus);
         }
     }
-    public autoRelease(billId?: number) {
-        this.get(`${baseUrl}/autoRelease`, {
-            id: billId || this.state.releaseBill.id
-        }).then((r: ReleaseBillModel) => {
-            this.setSta({
-                nowWork: r
+    public autoRelease(billId: number, serverId?: number) {
+        if (serverId) {
+            this.get(`${baseUrl}/aSeverAutoRelease`, {
+                id: billId,
+                serverId
+            }).then((r: ReleaseBillModel) => {
             })
-            this.setState({
-                stepStatus: 'process',
-                stepCurrent: 0,
-                releaseBill: r,
-                workChangeName: r.changeBranchModel.name
+        } else {
+            this.get(`${baseUrl}/autoRelease`, {
+                id: billId || this.props.redux.nowWork.id
+            }).then((r: ReleaseBillModel) => {
+                this.setSta({
+                    nowWork: r
+                })
+                this.setState({
+                    workChangeName: r.changeBranchModel.name
+                })
             })
-        })
+        }
     }
     public submitProStart() {
         this.get(`${baseUrl}/proStart`, {
-            id: this.state.releaseBill.id,
+            id: this.props.redux.nowWork.id,
             [this.state.releaseTimeStr ? 'startTime' : 'null']: this.state.releaseTimeStr
         }).then(r => {
             message.success("提交发布成功")
@@ -188,7 +174,7 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     }
     public stop() {
         this.get(`${baseUrl}/down`, {
-            id: this.state.releaseBill.id
+            id: this.props.redux.nowWork.id
         }).then((b: {
             status: boolean,
             bill: ReleaseBillModel
@@ -203,27 +189,27 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     public stepClick = (status: 'stop' | 'restart' | 'error-restart' | 'continue', serverId?: number) => () => {
         if (status === 'restart') {
             if (this.state.stepCurrent === 0) {
-                this.autoRelease();
+                this.autoRelease(this.props.redux.nowWork.id, serverId);
             } else if (this.state.stepCurrent === 1) {
-                this.autoRelease();
+                this.autoRelease(serverId);
             } else if (this.state.stepCurrent === 2) {
-                this.autoRelease();
+                this.autoRelease(serverId);
             }
         } else if (status === 'error-restart') {
-            this.autoRelease();
+            this.autoRelease(this.props.redux.nowWork.id, serverId);
         } else if (status === "continue") {
             this.submitProStart();
         }
     }
     public stepButton = (index: number, stepCurrent?: number, releaseType?: string, serverId?: number) => {
         stepCurrent = stepCurrent ? stepCurrent : this.state.stepCurrent;
-        if (index != stepCurrent || !this.state.releaseBill.id) {
+        if (index != stepCurrent || !this.props.redux.nowWork.id) {
             return <span></span>
         }
-        releaseType = releaseType ? releaseType : this.state.releaseBill.releaseType
+        releaseType = releaseType ? releaseType : this.state.billStatus.releaseType
         // 线上发布构建完成，显示提交发布单
-        if (releaseType === "releaseSuccess" && this.state.releaseBill.releasePhase === "build" && this.props.env === "pro" && !serverId
-        && !this.state.releaseBill.releaseTime
+        if (releaseType === "releaseSuccess" && this.state.billStatus.releasePhase === "build" && this.props.env === "pro" && !serverId
+            && !this.state.billStatus.releaseTime
         ) {
             return <Button type="danger" onClick={() => {
                 this.setState({
@@ -231,7 +217,7 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
                 })
             }}>提交发布</Button>
         }
-        
+
         if (releaseType === "releaseSuccess" && stepCurrent === 1 && this.props.env === "pro") {
             return <Tag color="#f50">等待定时任务</Tag>
         }
@@ -253,7 +239,7 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     }
     public stepIcon = (index: number, stepCurrent?: number, type?: string): ReactNode => {
         stepCurrent = stepCurrent ? stepCurrent : this.state.stepCurrent;
-        type = type ? type : this.state.releaseBill.releaseType;
+        type = type ? type : this.state.billStatus.releaseType;
         let icon = (): {
             type: string,
             theme?: ThemeType,
@@ -332,10 +318,10 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
                 <div className="xy-center">
                     运行中的变更（<span style={{ color: 'red' }}>{this.state.workChangeName}</span>）
                     |
-                    启动时间:{this.state.releaseBill.releaseTime}
+                    启动时间:{this.props.redux.nowWork.releaseTime}
                 </div>
                 <div className="server-status">
-                    <Table dataSource={this.state.releaseBill.releaseServerStatusModels} bordered pagination={false}>
+                    <Table dataSource={this.state.billStatus.releaseServerStatusModels} bordered pagination={false}>
                         <Table.Column title="IP" dataIndex="serverModel.ip" key="ip" />
                         <Table.Column title="阶段" render={(text, record: ReleaseServerStatus, index) => {
                             switch (record.releasePhase) {

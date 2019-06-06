@@ -76,8 +76,8 @@ export default class IComp<M = {}, R = {}, P = object, S = {}, SS = any> extends
                     for (let k of keys) {
                         let oldValue = this.getValue(oldProps, k);
                         let newValue = this.getValue(newProps, k);
-                        console.log("oldValue", oldValue);
-                        console.log("newValue", newValue)
+                        // console.log("oldValue", oldValue);
+                        // console.log("newValue", newValue)
                         if (!this.equals(oldValue, newValue)) {
                             let values = [];
                             for (let k1 of keys) {
@@ -99,18 +99,22 @@ export default class IComp<M = {}, R = {}, P = object, S = {}, SS = any> extends
         state: ((prevState: Readonly<S>, props: Readonly<P>) => (Pick<S, K> | S | null)) | (Pick<S, K> | S | null) | any,
         callback?: () => void
     ): void {
-        let oldState = this.state;
+        let oldState = {...this.state};
+        let newState = state
         let call = () => {
             try {
                 for (let key in this.watch) {
                     let keys = key.split(",");
                     for (let k of keys) {
                         let oldValue = this.getValue(oldState, k);
-                        let newValue = this.getValue(state, k);
+                        let newValue = this.getValue(newState, k);
+                        if (newValue === undefined) {
+                            continue;
+                        }
                         if (!this.equals(oldValue, newValue)) {
                             let values = [];
                             for (let k1 of keys) {
-                                values.push(this.getValue(this.state, k1));
+                                values.push(this.getValue(newState, k1));
                             }
                             this.watch[key](...values);
                             break;
