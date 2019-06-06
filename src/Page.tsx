@@ -11,13 +11,15 @@ export interface IPageProps<P = {}> {
     match?: match<P>,
     history?: H.History,
     dispatch?: any
+    env?:ADDPEnv
 }
 export type ADDPEnv = 'test' | 'pre' | 'pro' | 'bak'
 export type PageType = 'table' | 'add-form' | 'edit-form';
 export interface TablePageState {
     pageNumber: number,
     pageSize: number,
-    total?: number
+    total?: number,
+    tableLoading:boolean
 }
 export interface TablePageProps<M, R extends TablePageRedux<M>, P = any> extends IPageProps<P> {
     redux?: R

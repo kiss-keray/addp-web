@@ -5,10 +5,10 @@ import { connect } from 'dva';
 import { Form, Icon, Input, Button, Checkbox, message } from 'antd';
 import cookie from 'react-cookies'
 import { FormComponentProps } from 'antd/lib/form';
-interface IProps extends IPageProps<any>,FormComponentProps<any> {
+interface IProps extends IPageProps<any>, FormComponentProps<any> {
     redux?: APPReduxData
 }
-class Login extends Page<any, APPReduxData,IProps> {
+class Login extends Page<any, APPReduxData, IProps> {
     public constructor(props: IPageProps) {
         super(props, '', 'app');
     }
@@ -26,8 +26,8 @@ class Login extends Page<any, APPReduxData,IProps> {
             ...this.props.form.getFieldsValue(),
             password: md5(this.props.form.getFieldValue("password")).toUpperCase()
         }).then(result => {
-            cookie.save("TOKEN",result.token,{
-                expires: new Date(new Date().getTime() + 1000*60*60*24*7)
+            cookie.save("TOKEN", result.token, {
+                expires: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 7)
             });
             this.setSta({
                 user: result.member
@@ -43,17 +43,17 @@ class Login extends Page<any, APPReduxData,IProps> {
         return token && token !== {};
     }
     private directional() {
-        console.log("login",this.props.history)
+        console.log("login", this.props.history)
         if (this.props.history.action == 'POP') {
             this.push("/")
         } else {
-           this.go(-1)
+            this.go(-1)
         }
     }
     render() {
         if (this.loginStatus()) {
             this.directional();
-            return <div/>
+            return <div />
         }
         const { getFieldDecorator } = this.props.form;
         return (

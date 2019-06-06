@@ -55,12 +55,14 @@ interface FState {
     selectTestServers?: Array<string>,
     selectPreServers?: Array<string>,
     selectProServers?: Array<string>,
+    saveLoading: boolean
 }
 class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FState> {
     constructor(props: IFormProps) {
         super(props, baseUrl);
+    }
+    componentWillMount() {
         this.initServer();
-
     }
     initServer() {
         this.post('/server/list', {
@@ -136,6 +138,7 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
         selectTestServers: [],
         selectPreServers: [],
         selectProServers: [],
+        saveLoading: false
     }
     componentDidMount() {
         this.props.form.setFieldsValue({
@@ -144,6 +147,9 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
     }
     handleSubmit = (e: any) => {
         let success = () => {
+            this.setState({
+                saveLoading: true
+            })
             if (this.props.formType === "add") {
                 this.postJson('/project/create', JSON.stringify(
                     {
@@ -162,6 +168,10 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         this.props.formSu && this.props.formSu(r);
                     }).catch(e => {
                         this.props.formFai && this.props.formFai(e);
+                    }).finally(() => {
+                        this.setState({
+                            saveLoading: false
+                        })
                     })
                 this.props.formSu && this.props.formSu({
                     id: 11
@@ -189,6 +199,10 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         }
                     }).catch(e => {
                         this.props.formFai && this.props.formFai(e);
+                    }).finally(() => {
+                        this.setState({
+                            saveLoading: false
+                        })
                     })
             }
         }
@@ -243,12 +257,12 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
 
                 <Form.Item label="项目日志路径/结尾">
                     {getFieldDecorator('logPath', {
-                        initialValue:'/opt/addp/logs/'
+                        initialValue: '/opt/addp/logs/'
                     })(<Input />)}
                 </Form.Item>
 
                 <Form.Item wrapperCol={{ span: 12, offset: 5 }}>
-                    <Button type="primary" htmlType="submit">
+                    <Button type="primary" htmlType="submit" loading={this.state.saveLoading}>
                         保存
               </Button>
                     <Button type="primary" onClick={() => {
@@ -324,11 +338,16 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
         this.setSta({
             pageType: 'table'
         })
-        let env = this.props.match.params.env;
+    }
+
+    public loadTableData() {
+        this.setState({
+            tableLoading: true
+        })
         this.basePage({
             pageNumber: this.state.pageNumber,
             pageSize: this.state.pageSize
-        }, { env })
+        }, { env: this.props.env })
             .then(page => {
                 this.setSta({
                     list: page.content,
@@ -336,16 +355,20 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                 this.setState({
                     total: page.totalElements
                 })
+            }).finally(() => {
+                this.setState({
+                    tableLoading: false
+                })
             })
     }
-
     public state: IState = {
         selectModel: {},
         selectIds: [],
         pageNumber: 0,
-        pageSize: 10
+        pageSize: 10,
+        tableLoading: false
     }
-    
+
     componentWillMount() {
         this.dispatch({
             type: "app/updateState",
@@ -354,8 +377,16 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
             },
             owner: false
         })
+        this.loadTableData();
     }
-
+    watch = {
+        "pageNumber": () => {
+            this.loadTableData();
+        },
+        "pageSize": () => {
+            this.loadTableData();
+        }
+    }
     public rowSelection = {
         onChange: (selectedRowKeys, selectedRows) => {
             console.log(`selectedRowKeys: ${selectedRowKeys}`, 'selectedRows: ', selectedRows);
@@ -377,6 +408,7 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                     }}>添加</Button>
                 </div>
                 <Table
+                    loading={this.state.tableLoading}
                     dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}>
                     <Column title="id" dataIndex="id" key="id" />
                     <Column title="项目名" dataIndex="proName" key="proName" />
@@ -426,7 +458,6 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                                 pageSize,
                                 pageNumber
                             });
-
                         }
                     }
                 />

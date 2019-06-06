@@ -7,6 +7,7 @@ import { ThemeType } from "antd/lib/icon";
 import moment = require("moment");
 import { ServerModel } from "./Server";
 import { ReactNode } from "react";
+import * as WebscoketFactory from '../utils/WebSocketFactory'
 const Step = Steps.Step;
 export interface ReleaseServerStatus {
     releaseBillModel?: ReleaseBillModel,
@@ -44,7 +45,8 @@ interface IProps {
     env?: ADDPEnv,
     projectId: number,
     redux?: ChangeReduxData,
-    branchStatus?: string
+    branchStatus?: string,
+    flushChanges: Function
 }
 const baseUrl = '/release'
 export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps, IState> {
@@ -54,6 +56,9 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     }
     componentWillMount() {
         this.init();
+    }
+    componentDidMount() {
+
     }
     componentWillUnmount() {
         this.billWebSocket.close();
@@ -78,7 +83,7 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
     public billWebSocket: WebSocket;
 
     public billStatusSocket() {
-        this.billWebSocket = new WebSocket("ws://localhost:8080/bill/status");
+        this.billWebSocket = WebscoketFactory.factory("bill/status");
         this.billWebSocket.onmessage = ((ev: MessageEvent) => {
             let data: {
                 type: string,
@@ -135,8 +140,18 @@ export class ReleaseWork extends IComp<ReleaseBillModel, ChangeReduxData, IProps
             })
         },
         "billStatus": (billStatus: ReleaseBillModel) => {
-            console.log("watch --- billStatus", billStatus)
             this.setStep(billStatus);
+            // 线上发布完成
+            if (this.props.env === "pro" && billStatus.releasePhase === "stop") {
+                Modal.success({
+                    title: '线上发布成',
+                    content: `发布变更${this.state.workChangeName}`,
+                    okText: '发布完成',
+                    onOk: () => {
+                        this.props.flushChanges();
+                    }
+                });
+            }
         }
     }
     public autoRelease(billId: number, serverId?: number) {

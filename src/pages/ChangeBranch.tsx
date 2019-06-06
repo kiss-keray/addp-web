@@ -36,10 +36,12 @@ interface IState extends TablePageState {
     branchStatus?: boolean
 }
 interface IFormProps extends FormComponentProps, TableFormProps<ChangeBranchModel, ChangeReduxData> {
-    form: any
+    form: any,
+    projectId
 }
 interface FState extends TableFormState {
-    projects?: Array<ProjectModel>
+    projects?: Array<ProjectModel>,
+    saveLoading: boolean
 }
 class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, FState> {
     constructor(props: IFormProps) {
@@ -64,10 +66,14 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
         })
     }
     state: FState = {
-        projects: []
+        projects: [],
+        saveLoading: false
     }
     handleSubmit = (e: any) => {
         let success = () => {
+            this.setState({
+                saveLoading: true
+            })
             if (this.props.formType === "add") {
                 this.save(this.props.form.getFieldsValue())
                     .then(r => {
@@ -75,27 +81,32 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
                             pageType: 'table',
                             list: [...this.props.redux.list, r]
                         })
-                    })
-                    .catch(e => {
+                    }).catch(e => {
                         message.error("添加失败")
+                    }).finally(() => {
+                        this.setState({
+                            saveLoading: false
+                        })
                     })
             } else if (this.props.formType === "edit") {
                 this.update({
                     ...this.props.form.getFieldsValue()
-                })
-                    .then((r) => {
-                        if (r) {
-                            this.setSta({
-                                pageType: 'table',
-                                list: this.props.redux.list.map(c => c.id === this.props.model.id ? this.props.model : c)
-                            })
-                        } else {
-                            message.error("更新失败")
-                        }
-                    })
-                    .catch(e => {
+                }).then((r) => {
+                    if (r) {
+                        this.setSta({
+                            pageType: 'table',
+                            list: this.props.redux.list.map(c => c.id === this.props.model.id ? this.props.model : c)
+                        })
+                    } else {
                         message.error("更新失败")
+                    }
+                }).catch(e => {
+                    message.error("更新失败")
+                }).finally(() => {
+                    this.setState({
+                        saveLoading: false
                     })
+                })
             }
         }
         this.props.form.validateFields(err => {
@@ -138,6 +149,7 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
                     this.props.formType == 'edit' ? <div></div> : (
                         <Form.Item label="关联项目">
                             {getFieldDecorator("projectId", {
+                                initialValue:parseInt(this.props.projectId),
                                 rules: [
                                     { required: true }
                                 ]
@@ -154,7 +166,7 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
                                     }
                                 >
                                     {
-                                        this.state.projects.map(p => (<Option key={p.id} value={p.id}>{p.proName}</Option>))
+                                        this.state.projects.map(p => (<Option disabled={p.id != this.props.projectId} key={p.id} value={p.id}>{p.proName}</Option>))
 
                                     }
                                 </Select>
@@ -163,7 +175,7 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
                     )
                 }
                 <Form.Item wrapperCol={{ span: 12, offset: 5 }}>
-                    <Button type="primary" htmlType="submit">
+                    <Button type="primary" htmlType="submit" loading={this.state.saveLoading} >
                         保存
               </Button>
                     <Button type="primary" onClick={() => {
@@ -201,7 +213,8 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         pageNumber: 1,
         pageSize: 10,
         currentEnv: "test",
-        branchStatus: false
+        branchStatus: false,
+        tableLoading: false
     }
     componentWillMount() {
         this.dispatch({
@@ -221,10 +234,17 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         clearInterval(this.branchStatusInterval);
     }
     public loadTableData() {
+        this.setState({
+            tableLoading: true
+        })
         this.get(`/change/projectChanges/${this.props.match.params.projectId}`)
             .then((list: Array<ChangeBranchModel>) => {
                 this.setSta({
                     list
+                })
+            }).finally(() => {
+                this.setState({
+                    tableLoading: false
                 })
             })
     }
@@ -282,9 +302,12 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
                         projectId={this.props.match.params.projectId}
                         changeId={this.state.selectModel.id}
                         branchStatus={this.state.branchStatus}
+                        flushChanges={this.loadTableData.bind(this)}
                     ></CReleaseWork>
                 </div>
-                <Table dataSource={this.props.redux.list} bordered>
+                <Table dataSource={this.props.redux.list} bordered
+                    loading={this.state.tableLoading}
+                >
                     <Column title="创建时间" dataIndex="createTime" key="createTime" />
                     <Column title="变更名" dataIndex="name" key="name" />
                     <Column title="分支名" dataIndex="branchName" key="branchName" />
@@ -306,7 +329,7 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
                                 return (
                                     <div>
                                         <Button type="primary" onClick={() => {
-                                            this.releaseWorkRef.current.getWrappedInstance().autoRelease()
+                                            this.releaseWorkRef.current.getWrappedInstance().autoRelease(this.props.redux.nowWork.id)
                                         }}>重新部署</Button>
                                         <Button type="danger" onClick={() => {
                                             this.releaseWorkRef.current.getWrappedInstance().stop()
@@ -360,10 +383,10 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         }
     }
     public loadServerEditForm = (model: ChangeBranchModel) => {
-        return (<ChangeFrom formType='edit' model={model} />)
+        return (<ChangeFrom formType='edit' model={model} projectId={this.props.match.params.projectId}/>)
     }
     public loadServerAddForm() {
-        return (<ChangeFrom formType='add' />)
+        return (<ChangeFrom formType='add' projectId={this.props.match.params.projectId}/>)
     }
 
     public render() {

@@ -1,6 +1,6 @@
 import IApi, { PageData, ApiResult } from './IApi'
-import { string } from 'prop-types';
 import { message } from 'antd';
+import cookie from 'react-cookies'
 class AddpApi<M> implements IApi<M> {
     private baseUrl: string;
     constructor(baseUrl?: string) {
@@ -130,6 +130,9 @@ class AddpApi<M> implements IApi<M> {
             }catch(e) {
                 throw e;
             }
+        } else if (response.status === 401) {
+            cookie.remove("TOKEN");
+            location.href = "/?#/login"
         }
         const error = new Error(response.statusText);
         error.response = response;

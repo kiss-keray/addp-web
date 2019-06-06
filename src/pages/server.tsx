@@ -129,7 +129,7 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                     )}
                 </Form.Item>
                 <Form.Item wrapperCol={{ span: 12, offset: 5 }}>
-                    <Button type="primary" htmlType="submit">
+                    <Button type="primary" htmlType="submit" loading={this.state.saveLoading}>
                         保存
               </Button>
                     <Button type="primary" onClick={() => {
@@ -164,9 +164,10 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
         selectModel: {},
         selectIds: [],
         pageNumber: 0,
-        pageSize: 10
+        pageSize: 10,
+        tableLoading: false
     }
-    
+
     componentWillMount() {
         this.dispatch({
             type: "app/updateState",
@@ -186,6 +187,9 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
         }),
     };
     public loadTableData() {
+        this.setState({
+            tableLoading: true
+        })
         this.basePage({
             pageNumber: this.state.pageNumber,
             pageSize: this.state.pageSize
@@ -198,19 +202,29 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
                     type: 'list',
                     data: page.content
                 })
+            }).finally(() => {
+                this.setState({
+                    tableLoading: false
+                })
             })
     }
     watch = {
-        "env": (env:ADDPEnv) => {
+        "env": (env: ADDPEnv) => {
             this.loadTableData();
             this.setSta({
                 pageType: "table"
             })
         },
-        "redux.pageType": (pageType:PageType) => {
+        "redux.pageType": (pageType: PageType) => {
             if (pageType === "table") {
                 this.loadTableData();
             }
+        },
+        "pageNumber": () => {
+            this.loadTableData();
+        },
+        "pageSize": () => {
+            this.loadTableData();
         }
     }
     public loadTable(): React.ReactNode {
@@ -223,7 +237,9 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
                         })
                     }}>添加</Button>
                 </div>
-                <Table dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}>
+                <Table dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}
+                    loading={this.state.tableLoading}
+                >
                     <Column title="id" dataIndex="id" key="id" />
                     <Column title="IP" dataIndex="ip" key="ip" />
                     <Column title="端口" dataIndex="port" key="port" />
