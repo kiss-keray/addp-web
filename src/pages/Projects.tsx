@@ -238,21 +238,35 @@ class CProjectForm extends IComp<ProjectModel, ProjectReduxData, IFormProps, FSt
                         rules: [
                             { required: true, pattern: /\w+/g }
                         ],
-                    })(<Input disabled />)}
+                    })(<Input disabled={this.props.formType === 'edit'} />)}
                 </Form.Item>
                 <Form.Item label="git仓库">
-                    {getFieldDecorator('gitUrl', {})(<Input />)}
+                    {getFieldDecorator('gitUrl', {
+                        rules: [
+                            { required: true }
+                        ]
+                    })(<Input />)}
                 </Form.Item>
                 <Form.Item label="git用户名">
-                    {getFieldDecorator('gitUsername', {})(<Input />)}
+                    {getFieldDecorator('gitUsername', {
+                        rules: [
+                            { required: true }
+                        ]
+                    })(<Input />)}
                 </Form.Item>
 
                 <Form.Item label="git密码">
-                    {getFieldDecorator('gitPassword', {})(<Input />)}
+                    {getFieldDecorator('gitPassword', {
+                        rules: [
+                            { required: true }
+                        ]
+                    })(<Input />)}
                 </Form.Item>
 
                 <Form.Item label="主分支">
-                    {getFieldDecorator('master', {})(<Input />)}
+                    {getFieldDecorator('master', {
+                        initialValue: "master"
+                    })(<Input />)}
                 </Form.Item>
 
                 <Form.Item label="项目日志路径/结尾">
@@ -409,6 +423,7 @@ class Projects extends Page<ProjectModel, ProjectReduxData, IProps, IState> {
                 </div>
                 <Table
                     loading={this.state.tableLoading}
+                    pagination={false}
                     dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}>
                     <Column title="id" dataIndex="id" key="id" />
                     <Column title="项目名" dataIndex="proName" key="proName" />

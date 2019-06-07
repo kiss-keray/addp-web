@@ -2,7 +2,7 @@ import * as React from 'react';
 require('../index.css');
 import { Button, Pagination } from 'antd';
 import { connect } from 'dva';
-import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TablePageProps, TablePageRedux, TableFormProps } from '../Page';
+import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TablePageProps, TablePageRedux, TableFormProps, TableFormState } from '../Page';
 import { Table, Divider, Tag } from 'antd';
 import {
     Form,
@@ -42,9 +42,12 @@ export interface ServerReduxData extends TablePageRedux<ServerModel> {
  * 
  * 服务器管理表单
  */
-class CServerForm extends IComp<ServerModel, any, IFormProps> {
+class CServerForm extends IComp<ServerModel, any, IFormProps, TableFormState> {
     constructor(props: IFormProps) {
         super(props, baseUrl, "server");
+    }
+    state = {
+        saveLoading: false;
     }
     componentDidMount() {
         this.props.form.setFieldsValue({
@@ -53,6 +56,9 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
     }
     handleSubmit = (e: any) => {
         let success = () => {
+            this.setState({
+                saveLoading: true
+            })
             if (this.props.formType === "add") {
                 this.save(this.props.form.getFieldsValue())
                     .then(r => {
@@ -62,6 +68,10 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                     })
                     .catch(e => {
                         this.props.formFai && this.props.formFai(e);
+                    }).finally(() => {
+                        this.setState({
+                            saveLoading: false
+                        })
                     })
             } else if (this.props.formType === "edit") {
                 this.update(this.props.form.getFieldsValue())
@@ -71,15 +81,19 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                         })
                     }).catch(e => {
                         this.props.formFai && this.props.formFai(e);
+                    }).finally(() => {
+                        this.setState({
+                            saveLoading: false
+                        })
                     })
             }
         }
-        // this.props.form.validateFields((errors, values) => {
-        //     if (!errors) {
-        //         success();
-        //     }
-        // });
-        success();
+        this.props.form.validateFields((errors, values) => {
+            if (!errors) {
+                success();
+            }
+        });
+        // success();
     };
 
     render() {
@@ -105,10 +119,19 @@ class CServerForm extends IComp<ServerModel, any, IFormProps> {
                     })(<Input />)}
                 </Form.Item>
                 <Form.Item label="用户名">
-                    {getFieldDecorator('username', {})(<Input />)}
+                    {getFieldDecorator('username', {
+                        initialValue: 'root',
+                        rules: [
+                            { required: true }
+                        ],
+                    })(<Input />)}
                 </Form.Item>
                 <Form.Item label="密码">
-                    {getFieldDecorator('password', {})(<Input />)}
+                    {getFieldDecorator('password', {
+                        rules: [
+                            { required: true }
+                        ],
+                    })(<Input/>)}
                 </Form.Item>
 
                 <Form.Item label="sshKey">
@@ -239,6 +262,7 @@ class Server extends Page<ServerModel, ServerReduxData, IProps, IState> {
                 </div>
                 <Table dataSource={this.props.redux.list} bordered rowSelection={this.rowSelection}
                     loading={this.state.tableLoading}
+                    pagination={false}
                 >
                     <Column title="id" dataIndex="id" key="id" />
                     <Column title="IP" dataIndex="ip" key="ip" />

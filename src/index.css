@@ -213,3 +213,7 @@ only screen and (max-device-width:240px) {
   height: auto;
   margin: 2rem 0;
 }
+ul.ant-pagination {
+  margin-top: 0.5rem;
+  text-align:right;
+}

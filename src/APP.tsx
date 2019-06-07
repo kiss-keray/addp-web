@@ -71,7 +71,7 @@ class App extends Page<any, APPReduxData, IProps, {
         super(props, '', 'app');
     }
     public state = {
-        collapsed: true,
+        collapsed: false,
         env: 'test'
     }
     public getNavKey() {
@@ -120,16 +120,18 @@ class App extends Page<any, APPReduxData, IProps, {
                                 }
                             </Menu>
                         </Header>
-                        <Layout>
+                        <Layout  style={{ minHeight: '100vh' }}>
                             {
                                 this.props.redux.siderShow ? (
-                                    <Sider theme="dark" collapsible collapsed={this.state.collapsed} onCollapse={(collapsed) => {
-                                        this.setState({ collapsed })
-                                    }}>
+                                    <Sider theme="dark"
+                                     collapsible
+                                        collapsed={this.state.collapsed} onCollapse={(collapsed) => {
+                                            this.setState({ collapsed })
+                                        }}>
                                         <Menu
                                             mode="inline"
-                                            defaultSelectedKeys={['1']}
-                                            defaultOpenKeys={['sub1']}
+                                            defaultSelectedKeys={['test']}
+                                            defaultOpenKeys={['test']}
                                             onClick={({ key }) => {
                                                 this.setState({ env: key })
                                             }}
@@ -151,11 +153,11 @@ class App extends Page<any, APPReduxData, IProps, {
                                 ) : (<div></div>)
                             }
                             <Layout style={{ padding: '0 24px 24px' }}>
-                                <Breadcrumb style={{ margin: '16px 0' }}>
+                                {/* <Breadcrumb style={{ margin: '16px 0' }}>
                                     <Breadcrumb.Item>服务器</Breadcrumb.Item>
                                     <Breadcrumb.Item>列表</Breadcrumb.Item>
                                     <Breadcrumb.Item>详情</Breadcrumb.Item>
-                                </Breadcrumb>
+                                </Breadcrumb> */}
                                 <Content
                                     style={{
                                         background: '#fff',

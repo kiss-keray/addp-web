@@ -1,6 +1,6 @@
 import Page, { IPageProps, ADDPEnv, PageType, TablePageState, TableFormProps, TableFormState } from "../Page";
 import { ProjectModel } from "./Projects";
-import { Table, Button, message, Input, Form, Select, Pagination, Menu, Icon } from "antd";
+import { Table, Button, message, Input, Form, Select, Pagination, Menu, Icon, Tabs } from "antd";
 import IComp from "../IComp";
 import { connect } from "dva";
 import { FormComponentProps } from "antd/lib/form";
@@ -149,7 +149,7 @@ class CChangeFrom extends IComp<ChangeBranchModel, ChangeReduxData, IFormProps, 
                     this.props.formType == 'edit' ? <div></div> : (
                         <Form.Item label="关联项目">
                             {getFieldDecorator("projectId", {
-                                initialValue:parseInt(this.props.projectId),
+                                initialValue: parseInt(this.props.projectId),
                                 rules: [
                                     { required: true }
                                 ]
@@ -273,40 +273,52 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
     public loadTable(): React.ReactNode {
         return (
             <div>
-                <Menu
-                    onClick={({ key }) => {
-                        this.setState({
-                            currentEnv: key
-                        })
-                    }}
-                    selectedKeys={[this.state.currentEnv]}
-                    mode="horizontal"
-                >
-                    <Menu.Item key="test">
-                        <Icon type="apartment" />
-                        测试环境
-                    </Menu.Item>
-                    <Menu.Item key="pre">
-                        <Icon type="cloud-server" />
-                        预发环境
-                    </Menu.Item>
-                    <Menu.Item key="pro">
-                        <Icon type="cloud-upload" />
-                        正式环境
-                    </Menu.Item>
-                </Menu>
-                <div className="release-step">
-                    <CReleaseWork
-                        ref={this.releaseWorkRef}
-                        env={this.state.currentEnv}
-                        projectId={this.props.match.params.projectId}
-                        changeId={this.state.selectModel.id}
-                        branchStatus={this.state.branchStatus}
-                        flushChanges={this.loadTableData.bind(this)}
-                    ></CReleaseWork>
-                </div>
+                <Tabs type="line" activeKey={this.state.currentEnv} animated onChange={(key:ADDPEnv) => {
+                    this.setState({
+                        currentEnv:key
+                    })
+                }}>
+                    <Tabs.TabPane tab="日常/测试环境" key="test">
+                        <div className="release-step">
+                            <CReleaseWork
+                                ref={this.releaseWorkRef}
+                                env={this.state.currentEnv}
+                                projectId={this.props.match.params.projectId}
+                                changeId={this.state.selectModel.id}
+                                branchStatus={this.state.branchStatus}
+                                flushChanges={this.loadTableData.bind(this)}
+                            ></CReleaseWork>
+                        </div>
+                    </Tabs.TabPane>
+                    <Tabs.TabPane tab="预发环境" key="pre">
+                        <div className="release-step">
+                            <CReleaseWork
+                                ref={this.releaseWorkRef}
+                                env={this.state.currentEnv}
+                                projectId={this.props.match.params.projectId}
+                                changeId={this.state.selectModel.id}
+                                branchStatus={this.state.branchStatus}
+                                flushChanges={this.loadTableData.bind(this)}
+                            ></CReleaseWork>
+                        </div>
+                    </Tabs.TabPane>
+                    <Tabs.TabPane tab="正式环境" key="pro">
+                        <div className="release-step">
+                            <CReleaseWork
+                                ref={this.releaseWorkRef}
+                                env={this.state.currentEnv}
+                                projectId={this.props.match.params.projectId}
+                                changeId={this.state.selectModel.id}
+                                branchStatus={this.state.branchStatus}
+                                flushChanges={this.loadTableData.bind(this)}
+                            ></CReleaseWork>
+                        </div>
+                    </Tabs.TabPane>
+                </Tabs>
+
                 <Table dataSource={this.props.redux.list} bordered
                     loading={this.state.tableLoading}
+                    pagination={false}
                 >
                     <Column title="创建时间" dataIndex="createTime" key="createTime" />
                     <Column title="变更名" dataIndex="name" key="name" />
@@ -383,10 +395,10 @@ class ChangeBranch extends Page<ChangeBranchModel, ChangeReduxData, IProps, ISta
         }
     }
     public loadServerEditForm = (model: ChangeBranchModel) => {
-        return (<ChangeFrom formType='edit' model={model} projectId={this.props.match.params.projectId}/>)
+        return (<ChangeFrom formType='edit' model={model} projectId={this.props.match.params.projectId} />)
     }
     public loadServerAddForm() {
-        return (<ChangeFrom formType='add' projectId={this.props.match.params.projectId}/>)
+        return (<ChangeFrom formType='add' projectId={this.props.match.params.projectId} />)
     }
 
     public render() {
